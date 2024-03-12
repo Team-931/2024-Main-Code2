@@ -78,11 +78,12 @@ public class Climber extends SubsystemBase {
     }
 
     public boolean currentHigh(boolean isLeft) {
-        return false; //currentHighHelp(isLeft ? leftMotor : rightMotor);
+        return /* false; // */currentHighHelp(isLeft ? leftMotor : rightMotor);
     }
 
     private boolean currentHighHelp(TalonFX motor) {
-        return motor.getTorqueCurrent().getValueAsDouble() > ClimberConstants.currentHigh * motor.getMotorVoltage().getValueAsDouble();
+        return motor.getStatorCurrent().refresh().getValueAsDouble() > ClimberConstants.currentHigh
+                                                * Math.abs( motor.getMotorVoltage().getValueAsDouble());
     }
     public void stayPut() {
         leftMotor.setControl(heightReq.withPosition(leftHt.refresh().getValueAsDouble()));
