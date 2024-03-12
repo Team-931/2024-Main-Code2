@@ -58,6 +58,14 @@ public class RobotContainer {
   private final CommandGenericHID opStick =
       new CommandGenericHID(OperatorConstants.opStickPort);
 
+      double inputScale(double input, int scale) {
+        double temp = input;
+        for(int i = 0; i < scale; i++) {
+          temp *= Math.abs(temp);
+        }
+        return(temp);
+      }
+
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
@@ -71,10 +79,10 @@ public class RobotContainer {
         // Turning is controlled by the X axis of the right stick.
         new RunCommand(
             () -> m_robotDrive.drive(
-                -Math.pow(MathUtil.applyDeadband(m_driverController.getLeftY(), OperatorConstants.kDriveDeadband), 3),
-                -Math.pow(MathUtil.applyDeadband(m_driverController.getLeftX(), OperatorConstants.kDriveDeadband), 3),
-                -Math.pow(MathUtil.applyDeadband(m_driverController.getRightX(), OperatorConstants.kDriveDeadband), 3),
-                true, true),
+                inputScale(-MathUtil.applyDeadband(m_driverController.getLeftY(), OperatorConstants.kDriveDeadband), 2),
+                inputScale(-MathUtil.applyDeadband(m_driverController.getLeftX(), OperatorConstants.kDriveDeadband), 2),
+                inputScale(-MathUtil.applyDeadband(m_driverController.getRightX(), OperatorConstants.kDriveDeadband), 2),
+                true, false),
             m_robotDrive));
             
   }
