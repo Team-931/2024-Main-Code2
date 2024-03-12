@@ -13,6 +13,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.event.EventLoop;
@@ -58,7 +59,7 @@ public class RobotContainer {
   private final CommandGenericHID opStick =
       new CommandGenericHID(OperatorConstants.opStickPort);
 
-      double inputScale(double input, int scale) {
+double inputScale(double input, int scale) {
         double temp = input;
         for(int i = 0; i < scale; i++) {
           temp *= Math.abs(temp);
@@ -130,7 +131,7 @@ public class RobotContainer {
     /* y axis: forward and reverse shooter hold */
     new MultiBind (
       () -> {
-        var val = opStick.getRawAxis(OperatorConstants.intakeAxis);
+                var val = opStick.getRawAxis(OperatorConstants.intakeAxis);
         if (val > OperatorConstants.intakeTheshhold && shooter.sensorOff()) return 1;
         if (val < -OperatorConstants.intakeTheshhold) return 2;
         return 0;
@@ -145,6 +146,8 @@ public class RobotContainer {
     // rumble if the line break senses a "note"
     new Trigger (shooter::sensorOff) 
             .onFalse(rumble(true))
+            .onTrue(rumble(false));
+            (new Trigger(() -> rumbleTimer.hasElapsed(1)))
             .onTrue(rumble(false));
             
     /* y button: shooter shoot */
@@ -180,8 +183,11 @@ public class RobotContainer {
     
   }
 
+  private Timer rumbleTimer = new Timer();
+
   private Command rumble(boolean b) {
-    var xbox = m_driverController.getHID();
+    if (b) rumbleTimer.restart();
+        var xbox = m_driverController.getHID();
     return Commands.runOnce(() -> xbox.setRumble(RumbleType.kBothRumble, b? 1: 0));
   }
 
