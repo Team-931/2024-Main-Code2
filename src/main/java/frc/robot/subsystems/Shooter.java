@@ -109,8 +109,8 @@ public class Shooter extends SubsystemBase {
     // This method will be called once per scheduler run
     //shootBottom.set(ShooterConstants.shootBottomSpd * shootIng);
     //shootTop.set(ShooterConstants.shootTopSpd * shootIng);
-    holdBack.set(ShooterConstants.holdBackSpd * holdIng);
-    holdFront.set(ShooterConstants.holdFrontSpd * holdIngFront);
+    armIntakeControl.set(ShooterConstants.intakeRotationalSpeedReverse * holdIng);
+    floorIntakeControl.set(ShooterConstants.intakeRotationalSpeed * holdIngFront);
 /*     {
       if (periodicdelay > 0) --periodicdelay;
       else {
@@ -124,8 +124,8 @@ public class Shooter extends SubsystemBase {
  */}
 
   public void simulationInit() {
-    REVPhysicsSim.getInstance().addSparkMax(holdBack, DCMotor.getNEO(1));
-    REVPhysicsSim.getInstance().addSparkMax(holdFront, DCMotor.getNEO(1));
+    REVPhysicsSim.getInstance().addSparkMax(armIntakeControl, DCMotor.getNEO(1));
+    REVPhysicsSim.getInstance().addSparkMax(floorIntakeControl, DCMotor.getNEO(1));
   }
 
   @Override
@@ -154,13 +154,13 @@ public class Shooter extends SubsystemBase {
 //motors
   private final TalonFX shootTop = new TalonFX(ShooterConstants.shootTopID),
    shootBottom = new TalonFX(ShooterConstants.shootBottomID);
-  private final CANSparkMax holdFront = new CANSparkMax(ShooterConstants.holdFrontID, MotorType.kBrushless),
-   holdBack = new CANSparkMax(ShooterConstants.holdBackID, MotorType.kBrushless);
+  private final CANSparkMax floorIntakeControl = new CANSparkMax(ShooterConstants.holdFrontID, MotorType.kBrushless),
+   armIntakeControl = new CANSparkMax(ShooterConstants.holdBackID, MotorType.kBrushless);
   private final AnalogInput sensor = new AnalogInput(ShooterConstants.sensorID);
 /**  used only in periodic() */
   //private int periodicdelay = 0;
   private final StatusSignal<Double> shVel = shootBottom.getVelocity();
-  private final RelativeEncoder holdEnc = holdBack.getEncoder();
+  private final RelativeEncoder holdEnc = armIntakeControl.getEncoder();
   {
     holdEnc.setVelocityConversionFactor(ShooterConstants.RpM2RpS);
   }

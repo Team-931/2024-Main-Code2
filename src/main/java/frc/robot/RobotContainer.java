@@ -143,8 +143,7 @@ public class RobotContainer {
     /* y button: shooter shoot */
       opStick.button(1)
                   .onTrue(shooter.shootCommand(1)
-                      .andThen( new WaitUntilCommand(shooter::shootFastEnough), 
-                                shooter.holdCommand(ShooterConstants.holdFwd))) // possible bug !!! Line 79 may counteract it
+                      .andThen(shooter.holdCommand((ShooterConstants.holdFwd)*2))) // possible bug !!! Line 79 may counteract it
                   .onFalse(shooter.shootCommand(0)
                       .andThen(shooter.holdCommand(0)));
       opStick.button(5)  .onTrue(shooter.shootCommand(1))
