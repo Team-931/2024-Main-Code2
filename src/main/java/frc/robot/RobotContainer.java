@@ -130,9 +130,8 @@ public class RobotContainer {
     /* y axis: forward and reverse shooter hold */
     new MultiBind (
       () -> {
-        if (!shooter.sensorOff()) return 0;
         var val = opStick.getRawAxis(OperatorConstants.intakeAxis);
-        if (val > OperatorConstants.intakeTheshhold) return 1;
+        if (val > OperatorConstants.intakeTheshhold && shooter.sensorOff()) return 1;
         if (val < -OperatorConstants.intakeTheshhold) return 2;
         return 0;
       }, 
