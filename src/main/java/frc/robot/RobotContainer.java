@@ -13,7 +13,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.event.EventLoop;
@@ -147,7 +146,6 @@ public class RobotContainer {
     // rumble if the line break senses a "note"
     new Trigger (shooter::sensorOff) 
             .onFalse(rumble(true))
-            .or(new Trigger(() -> rumbleTimer.hasElapsed(1)))
             .onTrue(rumble(false));
             
     /* y button: shooter shoot */
@@ -183,10 +181,7 @@ public class RobotContainer {
     
   }
 
-  private Timer rumbleTimer = new Timer();
-
   private Command rumble(boolean b) {
-    if (b) rumbleTimer.restart();
     var xbox = m_driverController.getHID();
     return Commands.runOnce(() -> xbox.setRumble(RumbleType.kBothRumble, b? 1: 0));
   }

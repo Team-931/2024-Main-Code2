@@ -78,9 +78,10 @@ public class Climber extends SubsystemBase {
     }
 
     public boolean currentHigh(boolean isLeft) {
-        return /* false; // */currentHighHelp(isLeft ? leftMotor : rightMotor);
+        return currentHighHelp(isLeft ? leftMotor : rightMotor);
     }
 
+    /** do not use getTorqueCurrent(), it has the wrong sign */
     private boolean currentHighHelp(TalonFX motor) {
         return motor.getStatorCurrent().refresh().getValueAsDouble() > ClimberConstants.currentHigh
                                                 * Math.abs( motor.getMotorVoltage().getValueAsDouble());
