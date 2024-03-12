@@ -61,14 +61,15 @@ public final class Constants {
     public static final double gearing = 5 /* sprocket */ * 100 /* gearbox */ /1;
     public static final int ArmID = 10,
           boreEncoderID = 0;
-    public static final double rampTime = 1 /* sec */;
-    public static final double holdAt0 = .45 /* volts */; // test Voltage to stay up at moment arm horizontal
+    public static final double rampTime = .25 /* sec */;
+    public static final double holdAt0 = .4 /* volts */; // test Voltage to stay up at moment arm horizontal
     public static final double boreOffset = .662;
     public static final double lowerLimit = -14. /*degrees */ / 360 /* degrees / rotation */+ .07;
     public static final double upperLimit = .31 /* rotation */;
     /** full power at 1/5 of full range i. e. >= 3 inches to go */
-    public static final double kP = 12. /* volts */ / (upperLimit - lowerLimit) /* rotation */ * 5.;
+    public static final double kP = 12. /* volts */ / (upperLimit - lowerLimit) /* rotation */ * 4.5;
     public static final double kD = /* kP * 0.04 */0;
+    public static final double kV = 3;
   }
   public static class ShooterConstants {
     public static final double shootGearing = 2./3;

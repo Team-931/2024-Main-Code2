@@ -66,7 +66,19 @@ double inputScale(double input, int scale) {
         }
         return(temp);
       }
-
+double circularScale(double in, int dummy) {
+  boolean isNegative = in < 0;
+  double out = Math.sqrt(1 - Math.pow(in, 2)) + 1;
+  if (isNegative) {
+    return(out * -1);
+  }
+  else {
+    return(out);
+  }
+  
+  
+  
+}
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
