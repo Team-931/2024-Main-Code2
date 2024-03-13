@@ -77,14 +77,14 @@ public class Climber extends SubsystemBase {
         return runOnce(() -> {gotoHeight(height);});
     }
 
+    /** In the helper function, currentHighHelp, use getStatorCurrent, not getTorqueCurrent().
+     * Stator current is positive when working, negative when braking. However, Torque current's sign
+     * is the same as Motor voltage's. Note the absolute value applied to getMotorVoltage.
+     */
     public boolean currentHigh(boolean isLeft) {
         return currentHighHelp(isLeft ? leftMotor : rightMotor);
     }
 
-    /** use getStatorCurrent, not getTorqueCurrent(). Stator current is positive
-     * when working, negative when braking. Torque current's sign is the same as
-     * Motor voltage's. Note the absolute value of getMotorVoltage.
-     */
     private boolean currentHighHelp(TalonFX motor) {
         return motor.getStatorCurrent().refresh().getValueAsDouble() > ClimberConstants.currentHigh
                                                 * Math.abs( motor.getMotorVoltage().getValueAsDouble());
