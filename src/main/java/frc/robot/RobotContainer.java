@@ -92,12 +92,11 @@ public class RobotContainer {
         // Turning is controlled by the X axis of the right stick.
         new RunCommand(
             () -> m_robotDrive.drive(
-                circularScale(-MathUtil.applyDeadband(m_driverController.getLeftY(), OperatorConstants.kDriveDeadband)),
-  
+                circularScale(-MathUtil.applyDeadband(m_driverController.getLeftY(), OperatorConstants.kDriveDeadband)),  
                 circularScale(-MathUtil.applyDeadband(m_driverController.getLeftX(), OperatorConstants.kDriveDeadband)),
                 circularScale(-MathUtil.applyDeadband(m_driverController.getRightX(), OperatorConstants.kDriveDeadband)),
                 true, false),
-            m_robotDrive));  //non comment
+            m_robotDrive));
             
   }
 
@@ -158,7 +157,11 @@ public class RobotContainer {
     
     // rumble if the line break senses a "note"
     new Trigger (shooter::sensorOff) 
-            .onFalse(rumble(true))
+            .onFalse(rumble(true)
+              .andThen(
+                shooter.holdCommand(ShooterConstants.holdRvs*.25),
+                new WaitUntilCommand(shooter::sensorOff),
+                shooter.holdCommand(0)))
             .onTrue(rumble(false));
             (new Trigger(() -> rumbleTimer.hasElapsed(1)))
             .onTrue(rumble(false));
