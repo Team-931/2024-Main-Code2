@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.event.EventLoop;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OperatorConstants;
@@ -59,26 +60,25 @@ public class RobotContainer {
   private final CommandGenericHID opStick =
       new CommandGenericHID(OperatorConstants.opStickPort);
 
-double inputScale(double input, int scale) {
+  double inputScale(double input, int scale) {
         double temp = input;
         for(int i = 0; i < scale; i++) {
           temp *= Math.abs(temp);
         }
         return(temp);
       }
-double circularScale(double in, int dummy) {
+  double circularScale(double in) {
   boolean isNegative = in < 0;
-  double out = Math.sqrt(1 - Math.pow(in, 2)) + 1;
+  double out;
   if (isNegative) {
-    return(out * -1);
+    out = (1 - ((1 - DriveConstants.kMinSpeedMultiplier) * m_driverController.getLeftTriggerAxis())) * (Math.sqrt(1 - Math.pow(in, 2)) - 1);
   }
   else {
-    return(out);
+    out = (1 - ((1 - DriveConstants.kMinSpeedMultiplier) * m_driverController.getLeftTriggerAxis())) * (-Math.sqrt(1 - Math.pow(in, 2)) + 1);
   }
-  
-  
-  
+  return(out);
 }
+
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
@@ -86,15 +86,15 @@ double circularScale(double in, int dummy) {
     // Configure the button bindings
     configureButtonBindings();
 
-    // Configure default commands
+    // Configure default[\] commands
     m_robotDrive.setDefaultCommand(
         // The left stick controls translation of the robot.
         // Turning is controlled by the X axis of the right stick.
         new RunCommand(
             () -> m_robotDrive.drive(
-                inputScale(-MathUtil.applyDeadband(m_driverController.getLeftY(), OperatorConstants.kDriveDeadband), 2),
-                inputScale(-MathUtil.applyDeadband(m_driverController.getLeftX(), OperatorConstants.kDriveDeadband), 2),
-                inputScale(-MathUtil.applyDeadband(m_driverController.getRightX(), OperatorConstants.kDriveDeadband), 2),
+                circularScale(-MathUtil.applyDeadband(m_driverController.getLeftY(), OperatorConstants.kDriveDeadband)),
+                circularScale(-MathUtil.applyDeadband(m_driverController.getLeftX(), OperatorConstants.kDriveDeadband)),
+                circularScale(-MathUtil.applyDeadband(m_driverController.getRightX(), OperatorConstants.kDriveDeadband)),
                 true, false),
             m_robotDrive));
             

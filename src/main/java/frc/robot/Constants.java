@@ -76,7 +76,7 @@ public final class Constants {
     
     public static final double shootTopSpd = -120*shootGearing,
       shootBottomSpd = 27.5 / 80 * shootTopSpd,
-      intakeRotationalSpeedReverse = 0.5, intakeRotationalSpeed = -0.5, holdFwd = 1, holdRvs = -1;
+      intakeRotationalSpeedReverse = 0.3, intakeRotationalSpeed = -0.3, holdFwd = 1, holdRvs = -1;
 
     public static final int shootBottomID = 22, shootTopID = 23,
       holdBackID = 20, holdFrontID = 21,
@@ -88,6 +88,8 @@ public final class Constants {
     // the robot, rather the allowed maximum speeds
     public static final double kMaxSpeedMetersPerSecond = 4.8;
     public static final double kMaxAngularSpeed = 2 * Math.PI; // radians per second
+
+    public static final double kMinSpeedMultiplier = 0.5;
 
     public static final double kDirectionSlewRate = 1.2; // radians per second
     public static final double kMagnitudeSlewRate = 1.8; // percent per second (1 = 100%)
