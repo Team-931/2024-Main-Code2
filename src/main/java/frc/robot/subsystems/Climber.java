@@ -78,10 +78,10 @@ public class Climber extends SubsystemBase {
     }
 
     /** Is a motor about to stall? <p>
-     * In the helper function, currentHighHelp, use {@link com.ctre.phoenix6.hardware.core.CoreTalonFX.getStatorCurrent getStatorCurrent}, 
-     * not {@link com.ctre.phoenix6.hardware.core.CoreTalonFX.getTorqueCurrent getTorqueCurrent}.
+     * In the helper function, currentHighHelp, use {@link com.ctre.phoenix6.hardware.core.CoreTalonFX#getStatorCurrent getStatorCurrent}, 
+     * not {@link com.ctre.phoenix6.hardware.core.CoreTalonFX#getTorqueCurrent getTorqueCurrent}.
      * Stator current is positive when working, negative when braking. However, Torque current's sign
-     * is the same as Motor voltage's. Note the absolute value applied to getMotorVoltage.
+     * is the same as Motor voltage's. Note the absolute value applied to {@link com.ctre.phoenix6.hardware.core.CoreTalonFX#getMotorVoltage getMotorVoltage}.
      * @param isLeft selects the left vs. right motor
      * @return {@code true} if about to stall
      */
