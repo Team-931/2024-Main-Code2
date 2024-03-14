@@ -256,9 +256,9 @@ public class RobotContainer {
     // Run path following command, then stop at the end.
     return swerveControllerCommand.andThen(
       m_robotDrive.runOnce(() -> m_robotDrive.drive(0, 0, 0, false, false)),
-      shooter.shootCommand(1).andThen(
-        new WaitUntilCommand(shooter::shootFastEnough),
-        shooter.holdCommand(ShooterConstants.holdFwd)
-      ));
+      shooter.shootCommand(1),
+      new WaitUntilCommand(shooter::shootFastEnough),
+      shooter.holdCommand(ShooterConstants.holdFwd)
+      );
   }
 }
