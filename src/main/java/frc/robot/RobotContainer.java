@@ -155,16 +155,16 @@ public class RobotContainer {
       shooter.holdCommand(ShooterConstants.holdRvs)
           .andThen(intake.runIf(-.3, arm::atBottom))
       );
-    
+    Trigger teleopTrigger = new Trigger(DriverStation::isTeleop);
     // rumble if the line break senses a "note"
-    new Trigger (shooter::sensorOff) .or(DriverStation::isAutonomous)
+    teleopTrigger .and (new Trigger (shooter::sensorOff))
             .onFalse(rumble(true)
               .andThen(
                 shooter.holdCommand(ShooterConstants.holdRvs*.25),
                 new WaitUntilCommand(shooter::sensorOff ),
                 shooter.holdCommand(0)))
             .onTrue(rumble(false));
-            (new Trigger(() -> rumbleTimer.hasElapsed(1)))//doesn't work
+    teleopTrigger .and(new Trigger(() -> rumbleTimer.hasElapsed(1)))//doesn't work
             .onTrue(rumble(false));
             
     /* y button: shooter shoot */
@@ -258,7 +258,10 @@ public class RobotContainer {
       m_robotDrive.runOnce(() -> m_robotDrive.drive(0, 0, 0, false, false)),
       shooter.shootCommand(1),
       new WaitUntilCommand(shooter::shootFastEnough),
-      shooter.holdCommand(ShooterConstants.holdFwd)
+      shooter.holdCommand(ShooterConstants.holdFwd),
+      new WaitUntilCommand(2), // Could we wait for shooter::sensorOff, instead?
+      shooter.shootCommand(0),
+      shooter.holdCommand(0)
       );
   }
 }
