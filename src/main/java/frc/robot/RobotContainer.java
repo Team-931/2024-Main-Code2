@@ -248,7 +248,7 @@ public class RobotContainer {
 
     static Trajectory toAmpRight(double x, double y)  {
       return TrajectoryGenerator.generateTrajectory(
-      new Pose2d(0, 0, new Rotation2d(0)),
+      new Pose2d(x / 1.85, y / 1.85, new Rotation2d(0)),
       List.of(/* new Translation2d(0, -1.76/1.85) */),
       new Pose2d(-.04, -2.23/1.85, new Rotation2d(0)),
       config);
