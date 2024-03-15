@@ -87,20 +87,8 @@ public class RobotContainer {
   public RobotContainer() {
     // Configure the button bindings
     configureButtonBindings();
-    autoChooser.addOption("example", autoMaker.swerveControllerCommand(AutoMaker.exampleTrajectory));
-    autoChooser.addOption("to amp right",
-     autoMaker.swerveControllerCommand(AutoMaker.toAmpRight(
-      SmartDashboard.getNumber("starting x", 0),
-      SmartDashboard.getNumber("starting y", 0)
-     )).andThen(
-      m_robotDrive.runOnce(() -> m_robotDrive.drive(0, 0, 0, false, false)),
-      shooter.shootCommand(1),
-      new WaitUntilCommand(shooter::shootFastEnough),
-      shooter.holdCommand(ShooterConstants.holdFwd),
-      new WaitUntilCommand(2), // Could we wait for shooter::sensorOff, instead?
-      shooter.shootCommand(0),
-      shooter.holdCommand(0)
-      ));
+    autoChooser.addOption("example", 0); //autoMaker.swerveControllerCommand(AutoMaker.exampleTrajectory)
+    autoChooser.addOption("to amp right", 1);
     SmartDashboard.putData(autoChooser);
     SmartDashboard.setDefaultNumber("starting x", 0);
     SmartDashboard.setPersistent("starting x");
@@ -227,7 +215,7 @@ public class RobotContainer {
     return Commands.runOnce(() -> xbox.setRumble(RumbleType.kBothRumble, b? 1: 0));
   }
 
-  SendableChooser<Command> autoChooser = new SendableChooser<>();
+  SendableChooser<Integer> autoChooser = new SendableChooser<>();
   private final class AutoMaker {
     // Create config for trajectory
     static TrajectoryConfig config = new TrajectoryConfig(
@@ -282,6 +270,25 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     // Comment later
-    return autoChooser.getSelected();
+    switch (autoChooser.getSelected()) {
+      case 1:
+        return      autoMaker.swerveControllerCommand(AutoMaker.toAmpRight(
+      SmartDashboard.getNumber("starting x", 0),
+      SmartDashboard.getNumber("starting y", 0)
+     )).andThen(
+      m_robotDrive.runOnce(() -> m_robotDrive.drive(0, 0, 0, false, false)),
+      shooter.shootCommand(1),
+      new WaitUntilCommand(shooter::shootFastEnough),
+      shooter.holdCommand(ShooterConstants.holdFwd),
+      new WaitUntilCommand(2), // Could we wait for shooter::sensorOff, instead?
+      shooter.shootCommand(0),
+      shooter.holdCommand(0)
+      );
+
+      case 0:
+      default:
+        break;
+    }
+    return autoMaker.swerveControllerCommand(AutoMaker.exampleTrajectory);
   }
 }
