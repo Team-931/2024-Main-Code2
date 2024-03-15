@@ -243,8 +243,9 @@ public class RobotContainer {
          double endX = (.93 + diagCtr)/AutoConstants.distanceFudge, endY = -(3.13 + diagCtr)/AutoConstants.distanceFudge;
       return TrajectoryGenerator.generateTrajectory(
         new Pose2d(initX, initY, new Rotation2d(0)),
-        List.of(new Translation2d((2*initX+endX)/3, (2*initY + endY)/3),
-              new Translation2d((initX+2*endX)/3, (initY + 2*endY)/3)),
+        List.of(new Translation2d(endX, initY ),
+              new Translation2d(endX, (2*initY + endY)/3),
+              new Translation2d(endX, (initY + 2*endY)/3)),
         new Pose2d(endX, endY, new Rotation2d(-2*Math.PI/8)),//neg y's when blue
         config);
     }
