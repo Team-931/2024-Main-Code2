@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.event.EventLoop;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
@@ -86,7 +87,25 @@ public class RobotContainer {
   public RobotContainer() {
     // Configure the button bindings
     configureButtonBindings();
-
+    autoChooser.addOption("example", autoMaker.swerveControllerCommand(AutoMaker.exampleTrajectory));
+    autoChooser.addOption("to amp right",
+     autoMaker.swerveControllerCommand(AutoMaker.toAmpRight(
+      SmartDashboard.getNumber("starting x", 0),
+      SmartDashboard.getNumber("starting y", 0)
+     )).andThen(
+      m_robotDrive.runOnce(() -> m_robotDrive.drive(0, 0, 0, false, false)),
+      shooter.shootCommand(1),
+      new WaitUntilCommand(shooter::shootFastEnough),
+      shooter.holdCommand(ShooterConstants.holdFwd),
+      new WaitUntilCommand(2), // Could we wait for shooter::sensorOff, instead?
+      shooter.shootCommand(0),
+      shooter.holdCommand(0)
+      ));
+    SmartDashboard.putData(autoChooser);
+    SmartDashboard.setDefaultNumber("starting x", 0);
+    SmartDashboard.setPersistent("starting x");
+    SmartDashboard.setDefaultNumber("starting y", 0);
+    SmartDashboard.setPersistent("starting y");
     // Configure default[\] commands
     m_robotDrive.setDefaultCommand(
         // The left stick controls translation of the robot.
@@ -208,38 +227,42 @@ public class RobotContainer {
     return Commands.runOnce(() -> xbox.setRumble(RumbleType.kBothRumble, b? 1: 0));
   }
 
-  /**
-   * Use this to pass the autonomous command to the main {@link Robot} class.
-   *
-   * @return the command to run in autonomous
-   */
-  public Command getAutonomousCommand() {
+  SendableChooser<Command> autoChooser = new SendableChooser<>();
+  private final class AutoMaker {
     // Create config for trajectory
-    TrajectoryConfig config = new TrajectoryConfig(
-        AutoConstants.kMaxSpeedMetersPerSecond,
-        AutoConstants.kMaxAccelerationMetersPerSecondSquared)
-        // Add kinematics to ensure max speed is actually obeyed
-        .setKinematics(DriveConstants.kDriveKinematics);
+    static TrajectoryConfig config = new TrajectoryConfig(
+          AutoConstants.kMaxSpeedMetersPerSecond,
+          AutoConstants.kMaxAccelerationMetersPerSecondSquared)
+          // Add kinematics to ensure max speed is actually obeyed
+          .setKinematics(DriveConstants.kDriveKinematics);
 
     // An example trajectory to follow. All units in meters.(divide by 1.85)
-    Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(
-      new Pose2d(0, 0, new Rotation2d(0)),
-      List.of(/* new Translation2d(0, -1.76/1.85) */),
-      new Pose2d(-.04, -2.23/1.85, new Rotation2d(0)),
-/*         // Start at the origin facing the +X direction
+    static Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(
+           // Start at the origin facing the +X direction
         new Pose2d(0, 0, new Rotation2d(0)),
         // Pass through these two interior waypoints, making an 's' curve path
         List.of(new Translation2d(.2, .2), new Translation2d(.4, -.2)),
         // End 3 meters straight ahead of where we started, facing forward
         new Pose2d(1, 0, new Rotation2d(0)),
- */        config);
+         config);
 
-    var thetaController = new ProfiledPIDController(
+    static Trajectory toAmpRight(double x, double y)  {
+      return TrajectoryGenerator.generateTrajectory(
+      new Pose2d(0, 0, new Rotation2d(0)),
+      List.of(/* new Translation2d(0, -1.76/1.85) */),
+      new Pose2d(-.04, -2.23/1.85, new Rotation2d(0)),
+      config);
+    }
+
+   static ProfiledPIDController thetaController = new ProfiledPIDController(
         AutoConstants.kPThetaController, 0, 0, AutoConstants.kThetaControllerConstraints);
+    
+    SwerveControllerCommand swerveControllerCommand(Trajectory trajectory) {
     thetaController.enableContinuousInput(-Math.PI, Math.PI);
-
-    SwerveControllerCommand swerveControllerCommand = new SwerveControllerCommand(
-        exampleTrajectory,
+    // Reset odometry to the starting pose of the trajectory.
+    m_robotDrive.resetOdometry(trajectory.getInitialPose());
+    return new SwerveControllerCommand(
+        trajectory,
         m_robotDrive::getPose, // Functional interface to feed supplier
         DriveConstants.kDriveKinematics,
 
@@ -249,19 +272,16 @@ public class RobotContainer {
         thetaController,
         m_robotDrive::setModuleStates,
         m_robotDrive);
-
-    // Reset odometry to the starting pose of the trajectory.
-    m_robotDrive.resetOdometry(exampleTrajectory.getInitialPose());
-
-    // Run path following command, then stop at the end.
-    return swerveControllerCommand.andThen(
-      m_robotDrive.runOnce(() -> m_robotDrive.drive(0, 0, 0, false, false)),
-      shooter.shootCommand(1),
-      new WaitUntilCommand(shooter::shootFastEnough),
-      shooter.holdCommand(ShooterConstants.holdFwd),
-      new WaitUntilCommand(2), // Could we wait for shooter::sensorOff, instead?
-      shooter.shootCommand(0),
-      shooter.holdCommand(0)
-      );
+    }
+  }
+  AutoMaker autoMaker = new AutoMaker();
+  /**
+   * Use this to pass the autonomous command to the main {@link Robot} class.
+   *
+   * @return the command to run in autonomous
+   */
+  public Command getAutonomousCommand() {
+    // Comment later
+    return autoChooser.getSelected();
   }
 }
