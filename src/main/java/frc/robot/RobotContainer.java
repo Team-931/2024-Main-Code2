@@ -13,6 +13,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -73,7 +74,7 @@ public class RobotContainer {
     }
     return(out);
   }
-  double circularScale(double in, int dummy) {
+  double circularScale(double in) {
   boolean isNegative = in < 0;
   double out;
   if (isNegative) {
@@ -98,12 +99,11 @@ public class RobotContainer {
         // Turning is controlled by the X axis of the right stick.
         new RunCommand(
             () -> m_robotDrive.drive(
-                circularScale(-MathUtil.applyDeadband(m_driverController.getLeftY(), OperatorConstants.kDriveDeadband), 2),
-  
-                circularScale(-MathUtil.applyDeadband(m_driverController.getLeftX(), OperatorConstants.kDriveDeadband), 2),
-                circularScale(-MathUtil.applyDeadband(m_driverController.getRightX(), OperatorConstants.kDriveDeadband), 2),
+                circularScale(-MathUtil.applyDeadband(m_driverController.getLeftY(), OperatorConstants.kDriveDeadband)),  
+                circularScale(-MathUtil.applyDeadband(m_driverController.getLeftX(), OperatorConstants.kDriveDeadband)),
+                circularScale(-MathUtil.applyDeadband(m_driverController.getRightX(), OperatorConstants.kDriveDeadband)),
                 true, false),
-            m_robotDrive));  //non comment
+            m_robotDrive));
             
   }
 
@@ -151,7 +151,7 @@ public class RobotContainer {
     new MultiBind (
       () -> {
                 var val = opStick.getRawAxis(OperatorConstants.intakeAxis);
-        if (val > OperatorConstants.intakeTheshhold && shooter.sensorOff()) return 1;
+        if (val > OperatorConstants.intakeTheshhold /*  && shooter.sensorOff() */ ) return 1;
         if (val < -OperatorConstants.intakeTheshhold) return 2;
         return 0;
       }, 
@@ -161,18 +161,22 @@ public class RobotContainer {
       shooter.holdCommand(ShooterConstants.holdRvs)
           .andThen(intake.runIf(-.3, arm::atBottom))
       );
-    
+    Trigger teleopTrigger = new Trigger(DriverStation::isTeleop);
     // rumble if the line break senses a "note"
-    new Trigger (shooter::sensorOff) 
-            .onFalse(rumble(true))
+    teleopTrigger .and (new Trigger (shooter::sensorOff))
+            .onFalse(rumble(true)
+              .andThen(
+                shooter.holdCommand(ShooterConstants.holdRvs*.25),
+                new WaitUntilCommand(shooter::sensorOff ),
+                shooter.holdCommand(0)))
             .onTrue(rumble(false));
-            (new Trigger(() -> rumbleTimer.hasElapsed(1)))
+    teleopTrigger .and(new Trigger(() -> rumbleTimer.hasElapsed(1)))//doesn't work
             .onTrue(rumble(false));
             
     /* y button: shooter shoot */
       opStick.button(1)
                   .onTrue(shooter.shootCommand(1)
-                      .andThen(shooter.holdCommand((ShooterConstants.holdFwd)*2))) // possible bug !!! Line 79 may counteract it
+                      .andThen(shooter.holdCommand((ShooterConstants.holdFwd)*2))) 
                   .onFalse(shooter.shootCommand(0)
                       .andThen(shooter.holdCommand(0)));
       opStick.button(5)  .onTrue(shooter.shootCommand(1))
@@ -223,15 +227,18 @@ public class RobotContainer {
         // Add kinematics to ensure max speed is actually obeyed
         .setKinematics(DriveConstants.kDriveKinematics);
 
-    // An example trajectory to follow. All units in meters.
+    // An example trajectory to follow. All units in meters.(divide by 1.85)
     Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(
-        // Start at the origin facing the +X direction
+      new Pose2d(0, 0, new Rotation2d(0)),
+      List.of(/* new Translation2d(0, -1.76/1.85) */),
+      new Pose2d(-.04, -2.23/1.85, new Rotation2d(0)),
+/*         // Start at the origin facing the +X direction
         new Pose2d(0, 0, new Rotation2d(0)),
         // Pass through these two interior waypoints, making an 's' curve path
-        List.of(new Translation2d(1, 1), new Translation2d(2, -1)),
+        List.of(new Translation2d(.2, .2), new Translation2d(.4, -.2)),
         // End 3 meters straight ahead of where we started, facing forward
-        new Pose2d(3, 0, new Rotation2d(0)),
-        config);
+        new Pose2d(1, 0, new Rotation2d(0)),
+ */        config);
 
     var thetaController = new ProfiledPIDController(
         AutoConstants.kPThetaController, 0, 0, AutoConstants.kThetaControllerConstraints);
@@ -253,6 +260,14 @@ public class RobotContainer {
     m_robotDrive.resetOdometry(exampleTrajectory.getInitialPose());
 
     // Run path following command, then stop at the end.
-    return swerveControllerCommand.andThen(() -> m_robotDrive.drive(0, 0, 0, false, false));
+    return swerveControllerCommand.andThen(
+      m_robotDrive.runOnce(() -> m_robotDrive.drive(0, 0, 0, false, false)),
+      shooter.shootCommand(1),
+      new WaitUntilCommand(shooter::shootFastEnough),
+      shooter.holdCommand(ShooterConstants.holdFwd),
+      new WaitUntilCommand(2), // Could we wait for shooter::sensorOff, instead?
+      shooter.shootCommand(0),
+      shooter.holdCommand(0)
+      );
   }
 }
