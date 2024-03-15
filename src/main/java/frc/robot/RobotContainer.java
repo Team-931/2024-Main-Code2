@@ -226,12 +226,16 @@ public class RobotContainer {
         AutoConstants.kMaxAccelerationMetersPerSecondSquared)
         // Add kinematics to ensure max speed is actually obeyed
         .setKinematics(DriveConstants.kDriveKinematics);
-
-    // An example trajectory to follow. All units in meters.(divide by 1.85)
+    final double diagCtr = 13/Math.sqrt(2)/39.4,
+    rectCtr = 13/39.4;
+    double initX = rectCtr/AutoConstants.distanceFudge, initY = -(5.91 + rectCtr)/AutoConstants.distanceFudge;
+    double endX = (.93 + diagCtr)/AutoConstants.distanceFudge, endY = -(3.13 + diagCtr)/AutoConstants.distanceFudge;
+    // An example trajectory to follow. All units in meters.(divide by AutoConstants.distanceFudge)
     Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(
-      new Pose2d(0, 0, new Rotation2d(0)),
-      List.of(/* new Translation2d(0, -1.76/1.85) */),
-      new Pose2d(-.04, -2.23/1.85, new Rotation2d(0)),
+      new Pose2d(initX, initY, new Rotation2d(0)),
+      List.of(new Translation2d((2*initX+endX)/3, (2*initY + endY)/3),
+            new Translation2d((initX+2*endX)/3, (initY + 2*endY)/3)),
+      new Pose2d(endX, endY, new Rotation2d(-2*Math.PI/8)),//neg y's when blue
 /*         // Start at the origin facing the +X direction
         new Pose2d(0, 0, new Rotation2d(0)),
         // Pass through these two interior waypoints, making an 's' curve path
@@ -263,7 +267,7 @@ public class RobotContainer {
     return swerveControllerCommand.andThen(
       m_robotDrive.runOnce(() -> m_robotDrive.drive(0, 0, 0, false, false)),
       shooter.shootCommand(1),
-      new WaitUntilCommand(shooter::shootFastEnough),
+      //new WaitUntilCommand(shooter::shootFastEnough),
       shooter.holdCommand(ShooterConstants.holdFwd),
       new WaitUntilCommand(2), // Could we wait for shooter::sensorOff, instead?
       shooter.shootCommand(0),
