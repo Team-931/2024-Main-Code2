@@ -40,6 +40,7 @@ import frc.robot.Constants.ShooterConstants;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Climber;
 import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.LimeLight;
 import frc.robot.subsystems.Shooter;
 /*
  * This class is where the bulk of the robot should be declared.  Since Command-based is a
@@ -54,6 +55,7 @@ public class RobotContainer {
   private final Intake intake = new Intake();
   private final Arm arm = new Arm();
   private final Climber climber = new Climber();
+  private final LimeLight limeLight = new LimeLight();
 
   // The driver's controller
   CommandXboxController m_driverController = new CommandXboxController(OperatorConstants.kDriverControllerPort);
@@ -61,13 +63,17 @@ public class RobotContainer {
       new CommandGenericHID(OperatorConstants.opStickPort);
 
   double inputScale(double input, int scale) {
-        double temp = input;
-        for(int i = 0; i < scale; i++) {
-          temp *= Math.abs(temp);
-        }
-        return(temp);
-      }
-  double circularScale(double in) {
+    boolean isNegative = input < 0;
+    double out;
+    if (isNegative) {
+      out = -(1 - ((1 - DriveConstants.kMinSpeedMultiplier) * m_driverController.getLeftTriggerAxis())) * (Math.pow(input, scale));
+    }
+    else {
+      out = (1 - ((1 - DriveConstants.kMinSpeedMultiplier) * m_driverController.getLeftTriggerAxis())) * (Math.pow(input, scale));
+    }
+    return(out);
+  }
+  double circularScale(double in, int dummy) {
   boolean isNegative = in < 0;
   double out;
   if (isNegative) {
@@ -92,10 +98,10 @@ public class RobotContainer {
         // Turning is controlled by the X axis of the right stick.
         new RunCommand(
             () -> m_robotDrive.drive(
-                circularScale(-MathUtil.applyDeadband(m_driverController.getLeftY(), OperatorConstants.kDriveDeadband)),
+                circularScale(-MathUtil.applyDeadband(m_driverController.getLeftY(), OperatorConstants.kDriveDeadband), 2),
   
-                circularScale(-MathUtil.applyDeadband(m_driverController.getLeftX(), OperatorConstants.kDriveDeadband)),
-                circularScale(-MathUtil.applyDeadband(m_driverController.getRightX(), OperatorConstants.kDriveDeadband)),
+                circularScale(-MathUtil.applyDeadband(m_driverController.getLeftX(), OperatorConstants.kDriveDeadband), 2),
+                circularScale(-MathUtil.applyDeadband(m_driverController.getRightX(), OperatorConstants.kDriveDeadband), 2),
                 true, false),
             m_robotDrive));  //non comment
             
