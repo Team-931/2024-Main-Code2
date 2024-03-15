@@ -98,7 +98,7 @@ public class Shooter extends SubsystemBase {
   }
 
   public boolean shootFastEnough() {
-    return shVel.getValueAsDouble() < .95 * ShooterConstants.shootBottomSpd;
+    return shVel.getValueAsDouble() > .95 * ShooterConstants.shootBottomSpd;
   }
 
     /** This method will be called once per scheduler run
@@ -111,7 +111,7 @@ public class Shooter extends SubsystemBase {
     //shootTop.set(ShooterConstants.shootTopSpd * shootIng);
     armIntakeControl.set(ShooterConstants.intakeRotationalSpeedReverse * holdIng);
     floorIntakeControl.set(ShooterConstants.intakeRotationalSpeed * holdIngFront);
-/*     {
+     /*     {
       if (periodicdelay > 0) --periodicdelay;
       else {
         periodicdelay = 10;

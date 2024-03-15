@@ -28,7 +28,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -88,7 +90,7 @@ public class RobotContainer {
     // Configure the button bindings
     configureButtonBindings();
     autoChooser.addOption("example", 0); //autoMaker.swerveControllerCommand(AutoMaker.exampleTrajectory)
-    autoChooser.addOption("to amp right", 1);
+    autoChooser.addOption("to speaker right", 1);
     SmartDashboard.putData(autoChooser);
     SmartDashboard.setDefaultNumber("starting x", 0);
     SmartDashboard.setPersistent("starting x");
@@ -234,12 +236,17 @@ public class RobotContainer {
         new Pose2d(1, 0, new Rotation2d(0)),
          config);
 
-    static Trajectory toAmpRight(double x, double y)  {
+         final double diagCtr = 13/Math.sqrt(2)/39.4,
+         rectCtr = 13/39.4;
+    Trajectory toSpeakerRight(double x, double y)  {
+         double initX = (x + rectCtr)/AutoConstants.distanceFudge, initY = -(y + rectCtr)/AutoConstants.distanceFudge;
+         double endX = (.93 + diagCtr)/AutoConstants.distanceFudge, endY = -(3.13 + diagCtr)/AutoConstants.distanceFudge;
       return TrajectoryGenerator.generateTrajectory(
-      new Pose2d(x / 1.85, y / 1.85, new Rotation2d(0)),
-      List.of(/* new Translation2d(0, -1.76/1.85) */),
-      new Pose2d(-.04, -2.23/1.85, new Rotation2d(0)),
-      config);
+        new Pose2d(initX, initY, new Rotation2d(0)),
+        List.of(new Translation2d((2*initX+endX)/3, (2*initY + endY)/3),
+              new Translation2d((initX+2*endX)/3, (initY + 2*endY)/3)),
+        new Pose2d(endX, endY, new Rotation2d(-2*Math.PI/8)),//neg y's when blue
+        config);
     }
 
    static ProfiledPIDController thetaController = new ProfiledPIDController(
@@ -272,15 +279,16 @@ public class RobotContainer {
     // Comment later
     switch (autoChooser.getSelected()) {
       case 1:
-        return      autoMaker.swerveControllerCommand(AutoMaker.toAmpRight(
+        return new SequentialCommandGroup(
+      autoMaker.swerveControllerCommand(autoMaker.toSpeakerRight(
       SmartDashboard.getNumber("starting x", 0),
       SmartDashboard.getNumber("starting y", 0)
-     )).andThen(
+     )),
       m_robotDrive.runOnce(() -> m_robotDrive.drive(0, 0, 0, false, false)),
       shooter.shootCommand(1),
       new WaitUntilCommand(shooter::shootFastEnough),
       shooter.holdCommand(ShooterConstants.holdFwd),
-      new WaitUntilCommand(2), // Could we wait for shooter::sensorOff, instead?
+      new WaitCommand(2), // Could we wait for shooter::sensorOff, instead?
       shooter.shootCommand(0),
       shooter.holdCommand(0)
       );
