@@ -9,11 +9,13 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -37,8 +39,11 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.IntSupplier;
+import java.util.function.UnaryOperator;
 
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.subsystems.Arm;
@@ -123,6 +128,7 @@ public class RobotContainer {
    * {@link JoystickButton}.
    */
 
+  boolean haveJustGottenNote =false;
   private void configureButtonBindings() {
     m_driverController.rightBumper().whileTrue(m_robotDrive.run(m_robotDrive :: setX));
         
@@ -156,34 +162,38 @@ public class RobotContainer {
         }
       }
     /* y axis: forward and reverse shooter hold */
-    var intakeState = new MultiBind (
+    new MultiBind (
       () -> {
-                var val = opStick.getRawAxis(OperatorConstants.intakeAxis);
-        if (val > OperatorConstants.intakeTheshhold /*  && shooter.sensorOff() */ ) return 1;
-        if (val < -OperatorConstants.intakeTheshhold) return 2;
-        return 0;
+        var val = opStick.getRawAxis(OperatorConstants.intakeAxis);
+        int retval = 0;
+        if (val > OperatorConstants.intakeTheshhold && !haveJustGottenNote)
+          if (shooter.sensorOff() ) retval = 1;
+          else {
+            retval = 3;
+            haveJustGottenNote = true;
+          }
+        else {
+          haveJustGottenNote = false;
+          if (val < -OperatorConstants.intakeTheshhold) retval = 2;
+        }
+        
+        return retval;
       }, 
-      shooter.holdCommand(0) .andThen(intake.runcommand(0),rumble(false)),
+      shooter.holdCommand(0) .andThen(intake.runcommand(0), rumble(false)),
 
       shooter.holdCommand(ShooterConstants.holdFwd)
-          .andThen(intake.runIf(.3, arm::atBottom)),
+          .andThen(intake.runIf(.3, arm::atBottom), rumble(false)),
       shooter.holdCommand(ShooterConstants.holdRvs)
-          .andThen(intake.runIf(-.3, arm::atBottom))
-      );
-    
-    
-    Trigger intakeTrigger = new Trigger(()-> lastMultiBinding == 1);
+          .andThen(intake.runIf(-.3, arm::atBottom), rumble(false)),
     // rumble if the line break senses a "note"
-    intakeTrigger .and (new Trigger (shooter::sensorOff))
-            .onFalse(rumble(true)
+      rumble(true)
               .andThen(
                 shooter.holdCommand(ShooterConstants.holdRvs*.25),
                 new WaitUntilCommand(shooter::sensorOff),
-                shooter.holdCommand(0)))
-            .onTrue(rumble(false));
-    intakeTrigger .and(new Trigger(() -> rumbleTimer.hasElapsed(1)))//doesn't work
-            .onTrue(rumble(false));
-            
+                shooter.holdCommand(0))
+      );
+    
+    
     /* y button: shooter shoot */
       opStick.button(1)
                   .onTrue(shooter.shootCommand(1)
@@ -239,21 +249,29 @@ public class RobotContainer {
            // Start at the origin facing the +X direction
         new Pose2d(0, 0, new Rotation2d(0)),
         // Pass through these two interior waypoints, making an 's' curve path
-        List.of(new Translation2d(.2, .2), new Translation2d(.4, -.2)),
+        List.of(/* new Translation2d(1, -1), new Translation2d(2, 1) */),
         // End 3 meters straight ahead of where we started, facing forward
-        new Pose2d(1, 0, new Rotation2d(0)),
+        new Pose2d(3, 0, Rotation2d.fromDegrees(90)),
          config);
 
-         final double diagCtr = 13/Math.sqrt(2)/39.4,
-         rectCtr = 13/39.4;
+         final Translation2d rectCtr = new Translation2d(DriveConstants.kWheelBase,DriveConstants.kTrackWidth).div(2*39.4*AutoConstants.distanceFudge);
     Trajectory toSpeakerRight(double x, double y)  {
-         double initX = (x + rectCtr)/AutoConstants.distanceFudge, initY = -(y + rectCtr)/AutoConstants.distanceFudge;
-         double endX = (.93 + diagCtr)/AutoConstants.distanceFudge, endY = -(3.13 + diagCtr)/AutoConstants.distanceFudge;
+    // - if blue, + if red
+    Optional<Alliance> alliance = DriverStation.getAlliance();
+    // - if blue, + if red
+    int allianceSign = alliance.isPresent() && alliance.get() == Alliance.Blue ? -1: 1;
+    UnaryOperator<Translation2d> maybeReflect = (t -> new Translation2d(t.getX(), t.getY() * allianceSign));
+    
+    var initAngle = Rotation2d.fromDegrees(0);
+    var init = maybeReflect.apply(new Translation2d (x, y) .div(AutoConstants.distanceFudge).plus(rectCtr .rotateBy(initAngle)));
+    var endAngle = Rotation2d.fromDegrees(AutoConstants.speakerAngle);
+    var end = maybeReflect.apply(AutoConstants.speakerRight .div(AutoConstants.distanceFudge).plus(rectCtr .rotateBy(endAngle)));
+         double initX = init.getX(), initY = init.getY();
+         double endX = end.getX(), endY = end.getY();
       return TrajectoryGenerator.generateTrajectory(
-        new Pose2d(initX, initY, new Rotation2d(0)),
-        List.of(new Translation2d((2*initX+endX)/3, (2*initY + endY)/3),
-              new Translation2d((initX+2*endX)/3, (initY + 2*endY)/3)),
-        new Pose2d(endX, endY, new Rotation2d(-2*Math.PI/8)),//neg y's when blue
+        new Pose2d(initX, initY, initAngle),
+        List.of(),
+        new Pose2d(endX, endY, endAngle.times(allianceSign)),
         config);
     }
 
@@ -309,4 +327,12 @@ public class RobotContainer {
     }
     return autoMaker.swerveControllerCommand(AutoMaker.exampleTrajectory);
   }
+/* 
+  class Rotator extends Command {
+    Rotation2d target;
+    Rotator (Rotation2d targetRotation2d) {
+      target = targetRotation2d;
+    }
+    void 
+  } */
 }
