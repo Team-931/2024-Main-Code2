@@ -278,7 +278,9 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     // Comment later
-    switch (autoChooser.getSelected()) {
+    Integer choice = autoChooser.getSelected();
+    if (choice == null) return null;
+    switch (choice) {
       case 1:
         return new SequentialCommandGroup(
       autoMaker.swerveControllerCommand(autoMaker.toSpeakerRight(
