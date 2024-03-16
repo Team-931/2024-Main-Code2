@@ -110,6 +110,9 @@ public class RobotContainer {
             
   }
 
+  //Works only with one multibind
+  int lastMultiBinding = 0;
+
   /**
    * Use this method to define your button->command mappings. Buttons can be
    * created by
@@ -119,6 +122,7 @@ public class RobotContainer {
    * passing it to a
    * {@link JoystickButton}.
    */
+
   private void configureButtonBindings() {
     m_driverController.rightBumper().whileTrue(m_robotDrive.run(m_robotDrive :: setX));
         
@@ -143,6 +147,7 @@ public class RobotContainer {
               int newInput = input.getAsInt();
               if (newInput != prevInput) {
                 prevInput = newInput;
+                lastMultiBinding = prevInput;
                 if (0 <= newInput && newInput < len)
                 output[newInput].schedule();
               }
@@ -151,29 +156,32 @@ public class RobotContainer {
         }
       }
     /* y axis: forward and reverse shooter hold */
-    new MultiBind (
+    var intakeState = new MultiBind (
       () -> {
                 var val = opStick.getRawAxis(OperatorConstants.intakeAxis);
         if (val > OperatorConstants.intakeTheshhold /*  && shooter.sensorOff() */ ) return 1;
         if (val < -OperatorConstants.intakeTheshhold) return 2;
         return 0;
       }, 
-      shooter.holdCommand(0) .andThen(intake.runcommand(0)),
+      shooter.holdCommand(0) .andThen(intake.runcommand(0),rumble(false)),
+
       shooter.holdCommand(ShooterConstants.holdFwd)
           .andThen(intake.runIf(.3, arm::atBottom)),
       shooter.holdCommand(ShooterConstants.holdRvs)
           .andThen(intake.runIf(-.3, arm::atBottom))
       );
-    Trigger teleopTrigger = new Trigger(DriverStation::isTeleop);
+    
+    
+    Trigger intakeTrigger = new Trigger(()-> lastMultiBinding == 1);
     // rumble if the line break senses a "note"
-    teleopTrigger .and (new Trigger (shooter::sensorOff))
+    intakeTrigger .and (new Trigger (shooter::sensorOff))
             .onFalse(rumble(true)
               .andThen(
                 shooter.holdCommand(ShooterConstants.holdRvs*.25),
-                new WaitUntilCommand(shooter::sensorOff ),
+                new WaitUntilCommand(shooter::sensorOff),
                 shooter.holdCommand(0)))
             .onTrue(rumble(false));
-    teleopTrigger .and(new Trigger(() -> rumbleTimer.hasElapsed(1)))//doesn't work
+    intakeTrigger .and(new Trigger(() -> rumbleTimer.hasElapsed(1)))//doesn't work
             .onTrue(rumble(false));
             
     /* y button: shooter shoot */
@@ -243,9 +251,8 @@ public class RobotContainer {
          double endX = (.93 + diagCtr)/AutoConstants.distanceFudge, endY = -(3.13 + diagCtr)/AutoConstants.distanceFudge;
       return TrajectoryGenerator.generateTrajectory(
         new Pose2d(initX, initY, new Rotation2d(0)),
-        List.of(new Translation2d(endX, initY ),
-              new Translation2d(endX, (2*initY + endY)/3),
-              new Translation2d(endX, (initY + 2*endY)/3)),
+        List.of(new Translation2d((2*initX+endX)/3, (2*initY + endY)/3),
+              new Translation2d((initX+2*endX)/3, (initY + 2*endY)/3)),
         new Pose2d(endX, endY, new Rotation2d(-2*Math.PI/8)),//neg y's when blue
         config);
     }
