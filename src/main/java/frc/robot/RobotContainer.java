@@ -253,6 +253,9 @@ public class RobotContainer {
 
   SendableChooser<Integer> autoChooser = new SendableChooser<>();
   private final class AutoMaker {
+    
+    static Rotation2d finalAngle = Rotation2d.fromDegrees(90);
+    static final Rotation2d piRot = Rotation2d.fromRotations(.5);
     // Create config for trajectory
     static TrajectoryConfig config = new TrajectoryConfig(
           AutoConstants.kMaxSpeedMetersPerSecond,
@@ -262,12 +265,13 @@ public class RobotContainer {
 
     // An example trajectory to follow. All units in meters.(divide by 1.85)
     static Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(
-           // Start at the origin facing the +X direction
+    
+        // Start at the origin facing the +X direction
         new Pose2d(0, 0, new Rotation2d(0)),
         // Pass through these two interior waypoints, making an 's' curve path
         List.of(/* new Translation2d(1, -1), new Translation2d(2, 1) */),
         // End 3 meters straight ahead of where we started, facing forward
-        new Pose2d(3, 0, Rotation2d.fromDegrees(90)),
+        new Pose2d(3, 0, finalAngle),
          config);
 
          final Translation2d rectCtr = new Translation2d(DriveConstants.kWheelBase,DriveConstants.kTrackWidth).div(2*39.4*AutoConstants.distanceFudge);
@@ -284,10 +288,12 @@ public class RobotContainer {
     var end = maybeReflect.apply(AutoConstants.speakerRight .div(AutoConstants.distanceFudge).plus(rectCtr .rotateBy(endAngle)));
          double initX = init.getX(), initY = init.getY();
          double endX = end.getX(), endY = end.getY();
+         endAngle = endAngle.times(allianceSign);
+         finalAngle = piRot.minus(endAngle);
       return TrajectoryGenerator.generateTrajectory(
         new Pose2d(initX, initY, initAngle),
         List.of(),
-        new Pose2d(endX, endY, endAngle.times(allianceSign)),
+        new Pose2d(endX, endY, endAngle),
         config);
     }
 
@@ -328,6 +334,7 @@ public class RobotContainer {
       SmartDashboard.getNumber("starting x", 0),
       SmartDashboard.getNumber("starting y", 0)
      )),
+      new Rotator(AutoMaker.finalAngle),
       m_robotDrive.runOnce(() -> m_robotDrive.drive(0, 0, 0, false, false)),
       shooter.shootCommand(1),
       new WaitUntilCommand(shooter::shootFastEnough),
@@ -342,7 +349,7 @@ public class RobotContainer {
         break;
     }
     return autoMaker.swerveControllerCommand(AutoMaker.exampleTrajectory)
-      .andThen(new Rotator(Rotation2d.fromDegrees(90)));
+      .andThen(new Rotator(AutoMaker.finalAngle));
   }
 
   class Rotator extends Command {
