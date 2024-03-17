@@ -331,7 +331,7 @@ public class RobotContainer {
     }
     @Override
     public void initialize() {
-      speed = .1 * Math.signum(target.getDegrees() - m_robotDrive.getHeading());
+      speed = .1 * Math.signum(target.minus(Rotation2d.fromDegrees(m_robotDrive.getHeading())).getRadians() );
     }
     @Override
     public void execute() {
@@ -340,7 +340,7 @@ public class RobotContainer {
 
     @Override
     public boolean isFinished() {
-      return speed * (target.getDegrees() - m_robotDrive.getHeading()) < 0;
+      return speed * target.minus(Rotation2d.fromDegrees(m_robotDrive.getHeading())).getRadians() <= 0;
     }
     @Override
     public void end(boolean interrupted) {
