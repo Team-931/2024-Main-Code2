@@ -86,6 +86,21 @@ public class RobotContainer {
   return(out);
 }
 
+/** first part of {@code circularScale} used in {@code m_robotDrive.setDefaultCommand}
+ * <p> {@code circularScale(in) == manualScale() * circularScale1(in) * in;}
+ */
+  double manualScale() {
+    return (1 - ((1 - DriveConstants.kMinSpeedMultiplier) * m_driverController.getLeftTriggerAxis()));
+  }
+
+/** second part of {@code circularScale} used in {@code m_robotDrive.setDefaultCommand}
+ * <p> {@code circularScale(in) == manualScale() * circularScale1(in) * in;}
+ * <p> also deals with case {@code in > 1} but assumes {@code in >= 0}
+ */
+  double circularScale1(double in) {
+    return in>1? 1/in: in / (1 + Math.sqrt(1 - in*in));
+  }
+
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
@@ -104,11 +119,18 @@ public class RobotContainer {
         // The left stick controls translation of the robot.
         // Turning is controlled by the X axis of the right stick.
         new RunCommand(
-            () -> m_robotDrive.drive(
-                circularScale(-MathUtil.applyDeadband(m_driverController.getLeftY(), OperatorConstants.kDriveDeadband)),  
-                circularScale(-MathUtil.applyDeadband(m_driverController.getLeftX(), OperatorConstants.kDriveDeadband)),
-                circularScale(-MathUtil.applyDeadband(m_driverController.getRightX(), OperatorConstants.kDriveDeadband)),
-                true, false),
+            () -> {
+              double scale = manualScale(),
+              yVal = -MathUtil.applyDeadband(m_driverController.getLeftY(), OperatorConstants.kDriveDeadband),
+              xVal = -MathUtil.applyDeadband(m_driverController.getLeftX(), OperatorConstants.kDriveDeadband),
+              turnVal = -MathUtil.applyDeadband(m_driverController.getRightX(), OperatorConstants.kDriveDeadband),
+              turnScale = circularScale1(Math.abs(turnVal)),
+              linScale = circularScale1(Math.sqrt(xVal*xVal+yVal*yVal));
+              m_robotDrive.drive(
+                (yVal) * scale * linScale,  
+                (xVal) * scale * linScale,
+                (turnVal) * scale * turnScale,
+                true, false);},
             m_robotDrive));
             
   }
