@@ -83,10 +83,17 @@ public class RobotContainer {
   return(out);
 }
 
+/** first part of {@code circularScale} used in {@code m_robotDrive.setDefaultCommand}
+ * <p> {@code circularScale(in) == manualScale() * circularScale1(in) * in;}
+ */
   double manualScale() {
     return (1 - ((1 - DriveConstants.kMinSpeedMultiplier) * m_driverController.getLeftTriggerAxis()));
   }
 
+/** second part of {@code circularScale} used in {@code m_robotDrive.setDefaultCommand}
+ * <p> {@code circularScale(in) == manualScale() * circularScale1(in) * in;}
+ * <p> also deals with case {@code in > 1} but assumes {@code in >= 0}
+ */
   double circularScale1(double in) {
     return in>1? 1/in: in / (1 + Math.sqrt(1 - in*in));
   }
