@@ -186,7 +186,8 @@ public final class Constants {
     public static final double distanceFudge = 1,
               inverseFudge = 1 / distanceFudge;
     public static final double speakerAngle = 60;
-    public static final Translation2d speakerRight = new Translation2d(.85, 3.58);
+    public static final Translation2d speakerRight = new Translation2d(.90, 3.13);
+    public static final double allianceZoneLimit = Units.inchesToMeters(76.1);
     public static final double kMaxSpeedMetersPerSecond = 3;
     public static final double kMaxAccelerationMetersPerSecondSquared = 3;
     public static final double kMaxAngularSpeedRadiansPerSecond = Math.PI;

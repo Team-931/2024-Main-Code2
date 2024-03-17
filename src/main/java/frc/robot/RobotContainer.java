@@ -13,6 +13,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
@@ -255,6 +256,7 @@ public class RobotContainer {
   private final class AutoMaker {
     
     static Rotation2d finalAngle = Rotation2d.fromDegrees(90);
+    static Pose2d finalPose = new Pose2d();
     static final Rotation2d piRot = Rotation2d.fromRotations(.5);
     // Create config for trajectory
     static TrajectoryConfig config = new TrajectoryConfig(
@@ -274,36 +276,39 @@ public class RobotContainer {
         new Pose2d(3, 0, finalAngle),
          config);
 
-         final Translation2d rectCtr = new Translation2d(DriveConstants.kWheelBase,DriveConstants.kTrackWidth).div(2*39.4*AutoConstants.distanceFudge);
+         final Translation2d rectCtr = new Translation2d(DriveConstants.kWheelBase,DriveConstants.kTrackWidth).div(2*AutoConstants.distanceFudge);
     Trajectory toSpeakerRight(double x, double y)  {
-    // - if blue, + if red
-    Optional<Alliance> alliance = DriverStation.getAlliance();
-    // - if blue, + if red
-    int allianceSign = alliance.isPresent() && alliance.get() == Alliance.Blue ? -1: 1;
     UnaryOperator<Translation2d> maybeReflect = (t -> new Translation2d(t.getX(), t.getY() * allianceSign));
     
     var initAngle = Rotation2d.fromDegrees(0);
     var init = maybeReflect.apply(new Translation2d (x, y) .div(AutoConstants.distanceFudge).plus(rectCtr .rotateBy(initAngle)));
     var endAngle = Rotation2d.fromDegrees(AutoConstants.speakerAngle);
     var end = maybeReflect.apply(AutoConstants.speakerRight .div(AutoConstants.distanceFudge).plus(rectCtr .rotateBy(endAngle)));
-         double initX = init.getX(), initY = init.getY();
-         double endX = end.getX(), endY = end.getY();
          endAngle = endAngle.times(allianceSign);
+         finalPose = new Pose2d(end, endAngle);
          finalAngle = piRot.minus(endAngle);
+         var initPose = new Pose2d(init, initAngle);
+         m_robotDrive.resetOdometry(initPose);
+    
       return TrajectoryGenerator.generateTrajectory(
-        new Pose2d(initX, initY, initAngle),
+        initPose,
         List.of(),
-        new Pose2d(endX, endY, endAngle),
+        finalPose,
         config);
     }
 
+    Trajectory speakerRightOutofZone() {
+      return TrajectoryGenerator.generateTrajectory(
+        finalPose,
+       List.of(),
+       new Pose2d(AutoConstants.allianceZoneLimit + DriveConstants.kWheelBase, Units.inchesToMeters(allianceSign * 240), new Rotation2d()), config);
+    }
    static ProfiledPIDController thetaController = new ProfiledPIDController(
         AutoConstants.kPThetaController, 0, 0, AutoConstants.kThetaControllerConstraints);
     
     SwerveControllerCommand swerveControllerCommand(Trajectory trajectory) {
     thetaController.enableContinuousInput(-Math.PI, Math.PI);
     // Reset odometry to the starting pose of the trajectory.
-    m_robotDrive.resetOdometry(trajectory.getInitialPose());
     return new SwerveControllerCommand(
         trajectory,
         m_robotDrive::getPose, // Functional interface to feed supplier
@@ -318,12 +323,18 @@ public class RobotContainer {
     }
   }
   AutoMaker autoMaker = new AutoMaker();
+  int allianceSign;
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
    *
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
+    // - if blue, + if red
+    Optional<Alliance> alliance = DriverStation.getAlliance();
+    // - if blue, + if red
+    allianceSign = alliance.isPresent() && alliance.get() == Alliance.Blue ? -1: 1;
+    
     // Comment later
     Integer choice = autoChooser.getSelected();
     if (choice == null) return null;
@@ -339,9 +350,10 @@ public class RobotContainer {
       shooter.shootCommand(1),
       new WaitUntilCommand(shooter::shootFastEnough),
       shooter.holdCommand(ShooterConstants.holdFwd),
-      new WaitCommand(2), // Could we wait for shooter::sensorOff, instead?
+      new WaitCommand(1), // Could we wait for shooter::sensorOff, instead?
       shooter.shootCommand(0),
-      shooter.holdCommand(0)
+      shooter.holdCommand(0),
+      autoMaker.swerveControllerCommand(autoMaker.speakerRightOutofZone())
       );
 
       case 0:
