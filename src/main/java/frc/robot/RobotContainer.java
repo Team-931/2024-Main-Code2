@@ -9,7 +9,6 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
@@ -39,7 +38,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.IntSupplier;
@@ -115,9 +113,6 @@ public class RobotContainer {
             
   }
 
-  //Works only with one multibind
-  int lastMultiBinding = 0;
-
   /**
    * Use this method to define your button->command mappings. Buttons can be
    * created by
@@ -128,7 +123,6 @@ public class RobotContainer {
    * {@link JoystickButton}.
    */
 
-  boolean haveJustGottenNote =false;
   private void configureButtonBindings() {
     m_driverController.rightBumper().whileTrue(m_robotDrive.run(m_robotDrive :: setX));
         
@@ -153,7 +147,6 @@ public class RobotContainer {
               int newInput = input.getAsInt();
               if (newInput != prevInput) {
                 prevInput = newInput;
-                lastMultiBinding = prevInput;
                 if (0 <= newInput && newInput < len)
                 output[newInput].schedule();
               }
@@ -163,22 +156,23 @@ public class RobotContainer {
       }
     /* y axis: forward and reverse shooter hold */
     new MultiBind (
-      () -> {
+      new IntSupplier() {
+          boolean haveJustGottenNote =false;
+        
+      public int getAsInt()  {
         var val = opStick.getRawAxis(OperatorConstants.intakeAxis);
-        int retval = 0;
-        if (val > OperatorConstants.intakeTheshhold && !haveJustGottenNote)
-          if (shooter.sensorOff() ) retval = 1;
+        if (val > OperatorConstants.intakeTheshhold) if (!haveJustGottenNote)
+          if (shooter.sensorOff() ) return 1;
           else {
-            retval = 3;
             haveJustGottenNote = true;
-          }
+            return 3;
+          } else;
         else {
           haveJustGottenNote = false;
-          if (val < -OperatorConstants.intakeTheshhold) retval = 2;
+          if (val < -OperatorConstants.intakeTheshhold) return 2;
         }
-        
-        return retval;
-      }, 
+        return 0;
+      }}, 
       shooter.holdCommand(0) .andThen(intake.runcommand(0), rumble(false)),
 
       shooter.holdCommand(ShooterConstants.holdFwd)
@@ -325,14 +319,32 @@ public class RobotContainer {
       default:
         break;
     }
-    return autoMaker.swerveControllerCommand(AutoMaker.exampleTrajectory);
+    return autoMaker.swerveControllerCommand(AutoMaker.exampleTrajectory)
+      .andThen(new Rotator(Rotation2d.fromDegrees(90)));
   }
-/* 
+
   class Rotator extends Command {
     Rotation2d target;
+    double speed;
     Rotator (Rotation2d targetRotation2d) {
       target = targetRotation2d;
     }
-    void 
-  } */
+    @Override
+    public void initialize() {
+      speed = .1 * Math.signum(target.getDegrees() - m_robotDrive.getHeading());
+    }
+    @Override
+    public void execute() {
+      m_robotDrive.drive(0, 0, speed, false, false);
+    }
+
+    @Override
+    public boolean isFinished() {
+      return speed * (target.getDegrees() - m_robotDrive.getHeading()) < 0;
+    }
+    @Override
+    public void end(boolean interrupted) {
+      m_robotDrive.drive(0, 0, 0, false, false);
+    }
+  }
 }
