@@ -188,9 +188,18 @@ public final class Constants {
     public static final double speakerAngle = 60;
     public static final Translation2d speakerRight = new Translation2d(.90, 3.13);
     public static final double allianceZoneLimit = Units.inchesToMeters(76.1);
-    public static final Translation2d centerToCloseNote = new Translation2d(2.98-.66, 2.66);
+    public static final double centerStartX = 0.9;
+    public static final double centerStartY = 2.66;
+    public static final Translation2d centerToCenterNote = new Translation2d(2.8-.66, 2.66);
+    public static final Translation2d noteToCenterSpeaker = new Translation2d(1.1 - 0.66, 2.65);
+    public static final Translation2d centerToLeftNote = new Translation2d(2.6 - 0.66, 0.95);
+    public static final Translation2d leftNoteToCenter = new Translation2d(1.11 - 0.66, 2.67);
+    public static final double leftStartX = 0.3;
+    public static final double leftStartY = 1.6;
+    public static final Translation2d leaveLeftSide1 = new Translation2d(0.8, 1.0);
+    public static final Translation2d leaveLeftSide2 = new Translation2d(1.8, 1.01);
 
-    public static final double kMaxSpeedMetersPerSecond = 3;
+    public static final double kMaxSpeedMetersPerSecond = 3.5;
     public static final double kMaxAccelerationMetersPerSecondSquared = 3;
     public static final double kMaxAngularSpeedRadiansPerSecond = Math.PI;
     public static final double kMaxAngularSpeedRadiansPerSecondSquared = Math.PI;
