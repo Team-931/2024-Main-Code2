@@ -304,12 +304,7 @@ public class RobotContainer {
     return retval;
     }
 
-    Trajectory speakerRightOutofZone() {
-      return TrajectoryGenerator.generateTrajectory(
-        finalPose,
-       List.of(),
-       new Pose2d(AutoConstants.allianceZoneLimit + DriveConstants.kWheelBase, Units.inchesToMeters(allianceSign * 240), new Rotation2d()), config);
-    }
+  
     
     Trajectory []fromCenterToCloseNote(double x, double y){
       Trajectory[] retVal = new Trajectory[2];
@@ -380,7 +375,7 @@ public class RobotContainer {
 SmartDashboard.putNumber("stage 1",indexStage[0].getTotalTimeSeconds());
 SmartDashboard.putNumber("stage 2",indexStage[1].getTotalTimeSeconds());
         return new SequentialCommandGroup(
-/*           shooter.shootCommand(1),
+          shooter.shootCommand(1),
           new WaitUntilCommand(shooter::shootFastEnough),
           shooter.holdCommand(ShooterConstants.holdFwd),
           new WaitCommand(1), // Could we wait for shooter::sensorOff, instead?
@@ -395,7 +390,7 @@ SmartDashboard.putNumber("stage 2",indexStage[1].getTotalTimeSeconds());
             shooter.holdCommand(0), 
             intake.runcommand(0))
             ),
- */
+
           
          autoMaker.swerveControllerCommand(indexStage[1]));
       case 1:
