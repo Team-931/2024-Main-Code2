@@ -322,11 +322,13 @@ public class RobotContainer {
         List.of(), 
         finalPose, 
         config);
+        config.setReversed(true);
       retVal[1] = TrajectoryGenerator.generateTrajectory(
         finalPose,
         List.of(), 
         initPose, 
         config);
+        config.setReversed(false);
       return retVal;
     }
 
