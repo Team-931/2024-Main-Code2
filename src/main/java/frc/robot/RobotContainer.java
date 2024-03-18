@@ -279,8 +279,8 @@ public class RobotContainer {
          config);
 
          final Translation2d rectCtr = new Translation2d(DriveConstants.kWheelBase,DriveConstants.kTrackWidth).div(2*AutoConstants.distanceFudge);
-    Trajectory toSpeakerRight(double x, double y)  {
-    
+    Trajectory[] toSpeakerRight(double x, double y)  {
+    var retval = new Trajectory[2];
     
     var initAngle = Rotation2d.fromDegrees(0);
     var init = maybeReflect.apply(new Translation2d (x, y) .div(AutoConstants.distanceFudge).plus(rectCtr .rotateBy(initAngle)));
@@ -292,11 +292,16 @@ public class RobotContainer {
          var initPose = new Pose2d(init, initAngle);
          m_robotDrive.resetOdometry(initPose);
     
-      return TrajectoryGenerator.generateTrajectory(
+      retval[0] = TrajectoryGenerator.generateTrajectory(
         initPose,
         List.of(),
         finalPose,
         config);
+      retval[1] = TrajectoryGenerator.generateTrajectory(
+        finalPose,
+       List.of(),
+       new Pose2d(AutoConstants.allianceZoneLimit + DriveConstants.kWheelBase, Units.inchesToMeters(allianceSign * 240), new Rotation2d()), config);
+    return retval;
     }
 
     Trajectory speakerRightOutofZone() {
@@ -372,6 +377,8 @@ public class RobotContainer {
         var indexStage = autoMaker.fromCenterToCloseNote(
           SmartDashboard.getNumber("starting x", 0), 
           SmartDashboard.getNumber("starting y", 0));
+SmartDashboard.putNumber("stage 1",indexStage[0].getTotalTimeSeconds());
+SmartDashboard.putNumber("stage 2",indexStage[1].getTotalTimeSeconds());
         return new SequentialCommandGroup(
 /*           shooter.shootCommand(1),
           new WaitUntilCommand(shooter::shootFastEnough),
@@ -390,14 +397,16 @@ public class RobotContainer {
             ),
  */
           
-
          autoMaker.swerveControllerCommand(indexStage[1]));
       case 1:
+      indexStage = autoMaker.toSpeakerRight(
+          SmartDashboard.getNumber("starting x", 0), 
+          SmartDashboard.getNumber("starting y", 0));
+
+SmartDashboard.putNumber("stage 1",indexStage[0].getTotalTimeSeconds());
+SmartDashboard.putNumber("stage 2",indexStage[1].getTotalTimeSeconds());
         return new SequentialCommandGroup(
-      autoMaker.swerveControllerCommand(autoMaker.toSpeakerRight(
-      SmartDashboard.getNumber("starting x", 0),
-      SmartDashboard.getNumber("starting y", 0)
-     )),
+      autoMaker.swerveControllerCommand(indexStage[0]),
       new Rotator(AutoMaker.finalAngle),
       m_robotDrive.runOnce(() -> m_robotDrive.drive(0, 0, 0, false, false)),
       shooter.shootCommand(1),
@@ -406,7 +415,7 @@ public class RobotContainer {
       new WaitCommand(1), // Could we wait for shooter::sensorOff, instead?
       shooter.shootCommand(0),
       shooter.holdCommand(0),
-      autoMaker.swerveControllerCommand(autoMaker.speakerRightOutofZone())
+      autoMaker.swerveControllerCommand(indexStage[1])
       );
 
       case 0:
