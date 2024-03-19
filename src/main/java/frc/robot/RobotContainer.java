@@ -379,7 +379,10 @@ SmartDashboard.putNumber("stage 1",indexStage[0].getTotalTimeSeconds());
 SmartDashboard.putNumber("stage 2",indexStage[1].getTotalTimeSeconds());
         return new SequentialCommandGroup(
           shooter.shootCommand(1),
-          new WaitUntilCommand(shooter::shootFastEnough),
+      new ParallelCommandGroup(
+        new WaitUntilCommand(shooter::shootFastEnough),
+        new WaitCommand(1)
+        ),
           shooter.holdCommand(ShooterConstants.holdFwd),
           new WaitCommand(1), // Could we wait for shooter::sensorOff, instead?
           shooter.shootCommand(0),
@@ -395,8 +398,9 @@ SmartDashboard.putNumber("stage 2",indexStage[1].getTotalTimeSeconds());
             ),
 
           
-         autoMaker.swerveControllerCommand(indexStage[1]),
-         shooter.shootCommand(1),
+         new ParallelCommandGroup
+            (autoMaker.swerveControllerCommand(indexStage[1]),
+         shooter.shootCommand(1)),
           new WaitUntilCommand(shooter::shootFastEnough),
           shooter.holdCommand(ShooterConstants.holdFwd),
           new WaitCommand(1), // Could we wait for shooter::sensorOff, instead?
@@ -418,7 +422,7 @@ SmartDashboard.putNumber("stage 2",indexStage[1].getTotalTimeSeconds());
       shooter.shootCommand(1),
       new WaitUntilCommand(shooter::shootFastEnough),
       shooter.holdCommand(ShooterConstants.holdFwd),
-      new WaitCommand(1), // Could we wait for shooter::sensorOff, instead?
+      new WaitUntilCommand(shooter::sensorOff), // Could we wait for shooter::sensorOff, instead?
       shooter.shootCommand(0),
       shooter.holdCommand(0),
       autoMaker.swerveControllerCommand(indexStage[1])
