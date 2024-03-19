@@ -176,3 +176,7 @@ logs/
 
 # Folder that has CTRE Phoenix Sim device config storage
 ctre_sim/
+
+# P.I.H. extras
+networktables.json
+networktables.json.bck
