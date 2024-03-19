@@ -307,12 +307,12 @@ public class RobotContainer {
 
   
     
-    Trajectory []fromCenterToCloseNote(double x, double y){
+    Trajectory []fromCenterToCloseNote(double x, double y, Translation2d destNote){
       Trajectory[] retVal = new Trajectory[2];
       var fromCenterToCloseNoteStartAngle = Rotation2d.fromDegrees(0);
       var fromCenterToCloseNoteStartPos = maybeReflect.apply(new Translation2d(x, y).plus(rectCtr.rotateBy(fromCenterToCloseNoteStartAngle)));
       var fromCenterToCloseNoteEndAngle = Rotation2d.fromDegrees(0);
-      var fromCenterToCloseNoteEndPos = maybeReflect.apply(AutoConstants.centerToCloseNote.plus(rectCtr.rotateBy(fromCenterToCloseNoteEndAngle)));
+      var fromCenterToCloseNoteEndPos = maybeReflect.apply(destNote.plus(rectCtr.rotateBy(fromCenterToCloseNoteEndAngle)));
       fromCenterToCloseNoteEndAngle = fromCenterToCloseNoteEndAngle.times(allianceSign);
       finalPose = new Pose2d(fromCenterToCloseNoteEndPos, fromCenterToCloseNoteEndAngle);
       finalAngle = piRot.minus(fromCenterToCloseNoteEndAngle);
@@ -374,9 +374,12 @@ public class RobotContainer {
       case 2:
         var indexStage = autoMaker.fromCenterToCloseNote(
           SmartDashboard.getNumber("starting x", 0), 
-          SmartDashboard.getNumber("starting y", 0));
-SmartDashboard.putNumber("stage 1",indexStage[0].getTotalTimeSeconds());
-SmartDashboard.putNumber("stage 2",indexStage[1].getTotalTimeSeconds());
+          SmartDashboard.getNumber("starting y", 0),
+          AutoConstants.centerToCloseNote);
+        var indexStage2  = autoMaker.fromCenterToCloseNote(
+          SmartDashboard.getNumber("starting x", 0), 
+          SmartDashboard.getNumber("starting y", 0),
+          AutoConstants.centerToLeftNote);
         return new SequentialCommandGroup(
           shooter.shootCommand(1),
       new ParallelCommandGroup(
@@ -400,6 +403,24 @@ SmartDashboard.putNumber("stage 2",indexStage[1].getTotalTimeSeconds());
           
          new ParallelCommandGroup
             (autoMaker.swerveControllerCommand(indexStage[1]),
+         shooter.shootCommand(1)),
+          new WaitUntilCommand(shooter::shootFastEnough),
+          shooter.holdCommand(ShooterConstants.holdFwd),
+          new WaitCommand(1), // Could we wait for shooter::sensorOff, instead?
+          shooter.shootCommand(0),
+          shooter.holdCommand(0) ,
+        new ParallelCommandGroup(
+            autoMaker.swerveControllerCommand(indexStage2[0]),
+            shooter.holdCommand(ShooterConstants.holdFwd)
+            .andThen(intake.runIf(.3, arm::atBottom), 
+            new ParallelRaceGroup(new WaitUntilCommand(()->!shooter.sensorOff()), new WaitCommand(indexStage[0].getTotalTimeSeconds() + 1.5)), 
+            shooter.holdCommand(0), 
+            intake.runcommand(0))
+            ),
+
+          
+         new ParallelCommandGroup
+            (autoMaker.swerveControllerCommand(indexStage2[1]),
          shooter.shootCommand(1)),
           new WaitUntilCommand(shooter::shootFastEnough),
           shooter.holdCommand(ShooterConstants.holdFwd),
