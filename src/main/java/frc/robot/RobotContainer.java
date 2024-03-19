@@ -30,6 +30,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
@@ -388,13 +389,21 @@ SmartDashboard.putNumber("stage 2",indexStage[1].getTotalTimeSeconds());
             autoMaker.swerveControllerCommand(indexStage[0]),
             shooter.holdCommand(ShooterConstants.holdFwd)
             .andThen(intake.runIf(.3, arm::atBottom), 
-            new WaitUntilCommand(()->!shooter.sensorOff()), 
+            new ParallelRaceGroup(new WaitUntilCommand(()->!shooter.sensorOff()), new WaitCommand(indexStage[0].getTotalTimeSeconds() + 1.5)), 
             shooter.holdCommand(0), 
             intake.runcommand(0))
             ),
 
           
-         autoMaker.swerveControllerCommand(indexStage[1]));
+         autoMaker.swerveControllerCommand(indexStage[1]),
+         shooter.shootCommand(1),
+          new WaitUntilCommand(shooter::shootFastEnough),
+          shooter.holdCommand(ShooterConstants.holdFwd),
+          new WaitCommand(1), // Could we wait for shooter::sensorOff, instead?
+          shooter.shootCommand(0),
+          shooter.holdCommand(0) 
+        )
+;
       case 1:
       indexStage = autoMaker.toSpeakerRight(
           SmartDashboard.getNumber("starting x", 0), 
