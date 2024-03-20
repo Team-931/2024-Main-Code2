@@ -6,6 +6,9 @@ package frc.robot;
 
 import com.revrobotics.CANSparkBase.IdleMode;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
@@ -183,13 +186,20 @@ public final class Constants {
   
 
   public static final class AutoConstants {
+    static final Rotation2d piRot = Rotation2d.fromRotations(.5);
     public static final double distanceFudge = 1,
               inverseFudge = 1 / distanceFudge;
     public static final double speakerAngle = 60;
     public static final Translation2d speakerRight = new Translation2d(.90, 3.13);
     public static final double allianceZoneLimit = Units.inchesToMeters(76.1);
-    public static final Translation2d centerToCloseNote = new Translation2d(2.98-.66, 2.66);
-    public static final Translation2d centerToLeftNote = new Translation2d(2.6 - 0.66, 0.95);
+    public static final Pose2d centerToCloseNote = new Pose2d(2.32, 2.66, Rotation2d.fromDegrees(0));
+    public static final Pose2d atLeftNote = new Pose2d(2.896, 1.22, new Rotation2d());
+    public static final Pose2d centerToLeftNote = 
+      atLeftNote
+       .plus(new Pose2d(2.32, 1.22, Rotation2d.fromDegrees(0))
+       .minus(atLeftNote)
+       .plus(new Transform2d(new Translation2d(), Rotation2d.fromDegrees(-30))));
+    public static final Translation2d leftExtra = new Translation2d(2, 1.22);
     
     public static final double kMaxSpeedMetersPerSecond = 3;
     public static final double kMaxAccelerationMetersPerSecondSquared = 3;

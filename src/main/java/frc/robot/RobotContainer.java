@@ -112,7 +112,8 @@ public class RobotContainer {
     configureButtonBindings();
     autoChooser.addOption("example", 0); //autoMaker.swerveControllerCommand(AutoMaker.exampleTrajectory)
     autoChooser.addOption("to speaker right", 1);
-    autoChooser.addOption("From Center To Note", 2);
+    autoChooser.addOption("From Center Two Notes", 2);
+    autoChooser.addOption("From Center Three Notes", 3);
     SmartDashboard.putData(autoChooser);
     SmartDashboard.setDefaultNumber("starting x", 0);
     SmartDashboard.setPersistent("starting x");
@@ -260,7 +261,6 @@ public class RobotContainer {
     
     static Rotation2d finalAngle = Rotation2d.fromDegrees(90);
     static Pose2d finalPose = new Pose2d();
-    static final Rotation2d piRot = Rotation2d.fromRotations(.5);
     // Create config for trajectory
     static TrajectoryConfig config = new TrajectoryConfig(
           AutoConstants.kMaxSpeedMetersPerSecond,
@@ -289,7 +289,7 @@ public class RobotContainer {
     var end = maybeReflect.apply(AutoConstants.speakerRight .div(AutoConstants.distanceFudge).plus(rectCtr .rotateBy(endAngle)));
          endAngle = endAngle.times(allianceSign);
          finalPose = new Pose2d(end, endAngle);
-         finalAngle = piRot.minus(endAngle);
+         finalAngle = AutoConstants.piRot.minus(endAngle);
          var initPose = new Pose2d(init, initAngle);
          m_robotDrive.resetOdometry(initPose);
     
@@ -301,26 +301,27 @@ public class RobotContainer {
       retval[1] = TrajectoryGenerator.generateTrajectory(
         finalPose,
        List.of(),
-       new Pose2d(AutoConstants.allianceZoneLimit + DriveConstants.kWheelBase, Units.inchesToMeters(allianceSign * 240), new Rotation2d()), config);
+       new Pose2d(AutoConstants.allianceZoneLimit + DriveConstants.kWheelBase+.05, Units.inchesToMeters(allianceSign * 240), new Rotation2d()), config);
     return retval;
     }
 
   
     
-    Trajectory []fromCenterToCloseNote(double x, double y, Translation2d destNote){
+    Trajectory []fromCenterToCloseNote(double x, double y, Pose2d destNote){
       Trajectory[] retVal = new Trajectory[2];
       var fromCenterToCloseNoteStartAngle = Rotation2d.fromDegrees(0);
       var fromCenterToCloseNoteStartPos = maybeReflect.apply(new Translation2d(x, y).plus(rectCtr.rotateBy(fromCenterToCloseNoteStartAngle)));
-      var fromCenterToCloseNoteEndAngle = Rotation2d.fromDegrees(0);
-      var fromCenterToCloseNoteEndPos = maybeReflect.apply(destNote.plus(rectCtr.rotateBy(fromCenterToCloseNoteEndAngle)));
+      var fromCenterToCloseNoteEndAngle = destNote.getRotation();
+      var fromCenterToCloseNoteEndPos = maybeReflect.apply(destNote.getTranslation().plus(rectCtr.rotateBy(fromCenterToCloseNoteEndAngle)));
+      List<Translation2d> waypts = /* destNote == AutoConstants.centerToLeftNote ?List.of(AutoConstants.leftExtra.plus(rectCtr.rotateBy(fromCenterToCloseNoteStartAngle))) : */List.of();
       fromCenterToCloseNoteEndAngle = fromCenterToCloseNoteEndAngle.times(allianceSign);
       finalPose = new Pose2d(fromCenterToCloseNoteEndPos, fromCenterToCloseNoteEndAngle);
-      finalAngle = piRot.minus(fromCenterToCloseNoteEndAngle);
+      finalAngle = AutoConstants.piRot.minus(fromCenterToCloseNoteEndAngle);
       var initPose = new Pose2d(fromCenterToCloseNoteStartPos, fromCenterToCloseNoteStartAngle);
       m_robotDrive.resetOdometry(initPose);
       retVal[0] = TrajectoryGenerator.generateTrajectory(
         initPose,
-        List.of(), 
+        waypts, 
         finalPose, 
         config);
         config.setReversed(true);
@@ -371,8 +372,44 @@ public class RobotContainer {
     Integer choice = autoChooser.getSelected();
     if (choice == null) return null;
     switch (choice) {
-      case 2:
+      case 2: // two notes
         var indexStage = autoMaker.fromCenterToCloseNote(
+          SmartDashboard.getNumber("starting x", 0), 
+          SmartDashboard.getNumber("starting y", 0),
+          AutoConstants.centerToCloseNote);
+        return new SequentialCommandGroup(
+          shooter.shootCommand(1),
+      new ParallelCommandGroup(
+        new WaitUntilCommand(shooter::shootFastEnough),
+        new WaitCommand(1)
+        ),
+          shooter.holdCommand(ShooterConstants.holdFwd),
+          new WaitCommand(1), // Could we wait for shooter::sensorOff, instead?
+          shooter.shootCommand(0),
+          shooter.holdCommand(0), 
+
+        new ParallelCommandGroup(
+            autoMaker.swerveControllerCommand(indexStage[0]),
+            shooter.holdCommand(ShooterConstants.holdFwd)
+            .andThen(intake.runIf(.3, arm::atBottom), 
+            new ParallelRaceGroup(new WaitUntilCommand(()->!shooter.sensorOff()), new WaitCommand(indexStage[0].getTotalTimeSeconds() + 1.5)), 
+            shooter.holdCommand(0), 
+            intake.runcommand(0))
+            ),
+
+          
+         new ParallelCommandGroup
+            (autoMaker.swerveControllerCommand(indexStage[1]),
+         shooter.shootCommand(1)),
+          new WaitUntilCommand(shooter::shootFastEnough),
+          shooter.holdCommand(ShooterConstants.holdFwd),
+          new WaitCommand(1), // Could we wait for shooter::sensorOff, instead?
+          shooter.shootCommand(0),
+          shooter.holdCommand(0)
+        )
+;
+  case 3: //Three notes
+        indexStage = autoMaker.fromCenterToCloseNote(
           SmartDashboard.getNumber("starting x", 0), 
           SmartDashboard.getNumber("starting y", 0),
           AutoConstants.centerToCloseNote);
@@ -429,24 +466,24 @@ public class RobotContainer {
           shooter.holdCommand(0) 
         )
 ;
-      case 1:
+      case 1: // one note from side
       indexStage = autoMaker.toSpeakerRight(
           SmartDashboard.getNumber("starting x", 0), 
           SmartDashboard.getNumber("starting y", 0));
 
-SmartDashboard.putNumber("stage 1",indexStage[0].getTotalTimeSeconds());
-SmartDashboard.putNumber("stage 2",indexStage[1].getTotalTimeSeconds());
         return new SequentialCommandGroup(
       autoMaker.swerveControllerCommand(indexStage[0]),
       new Rotator(AutoMaker.finalAngle),
-      m_robotDrive.runOnce(() -> m_robotDrive.drive(0, 0, 0, false, false)),
-      shooter.shootCommand(1),
+      new ParallelCommandGroup
+      (m_robotDrive.runOnce(() -> m_robotDrive.drive(0, 0, 0, false, false)),
+      shooter.shootCommand(1)),
       new WaitUntilCommand(shooter::shootFastEnough),
       shooter.holdCommand(ShooterConstants.holdFwd),
-      new WaitUntilCommand(shooter::sensorOff), // Could we wait for shooter::sensorOff, instead?
+      new WaitCommand(1), // Could we wait for shooter::sensorOff, instead?
       shooter.shootCommand(0),
       shooter.holdCommand(0),
-      autoMaker.swerveControllerCommand(indexStage[1])
+      autoMaker.swerveControllerCommand(indexStage[1]),
+      new Rotator(AutoConstants.piRot)
       );
 
       case 0:
