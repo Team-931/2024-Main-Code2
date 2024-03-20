@@ -287,18 +287,20 @@ public class RobotContainer {
     double speakerAngle = AutoConstants.speakerAngle;
     Translation2d speakerTranslation2d;
     Pose2d leavePose;
+    List<Translation2d> leaveWaypt;
 
     if (y < AutoConstants.centerToCloseNote.getY()) {
       speakerAngle = - AutoConstants.speakerAngle;
       speakerTranslation2d = AutoConstants.speakerLeft;
       leavePose = AutoConstants.leaveLeft;
+      leaveWaypt = List.of(/* AutoConstants.waypointLeft */);
     }
     else {
       speakerAngle = AutoConstants.speakerAngle;
       speakerTranslation2d = AutoConstants.speakerRight;
       leavePose = AutoConstants.leaveRight;
+      leaveWaypt = List.of();
     }
-
     var endAngle = Rotation2d.fromDegrees(speakerAngle);
     var end = maybeReflect.apply(speakerTranslation2d .plus(rectCtr .rotateBy(endAngle)));
          endAngle = endAngle.times(allianceSign);
@@ -316,7 +318,7 @@ public class RobotContainer {
         config);
       retval[1] = TrajectoryGenerator.generateTrajectory(
         finalPose,
-       List.of(),
+       leaveWaypt,
        leavePose, config);
     return retval;
     }

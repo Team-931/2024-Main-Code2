@@ -190,9 +190,13 @@ public final class Constants {
     public static final double speakerAngle = 60;
     public static final Translation2d speakerRight = new Translation2d(.90, 3.2);
     public static final Pose2d leaveRight = new Pose2d(2.64, Units.inchesToMeters(240), new Rotation2d());
-    public static final Translation2d speakerLeft = new Translation2d(.33, 1.62);
-    public static final Pose2d leaveLeft = new Pose2d(2.64, Units.inchesToMeters(2), new Rotation2d());
+
+    public static final Translation2d speakerLeft = new Translation2d(.38, 1.42);
+    public static final Pose2d leaveLeft = new Pose2d(2.34, 0, new Rotation2d());
+    public static final Translation2d waypointLeft = new Translation2d(1.05, .85);
+    
     public static final double allianceZoneLimit = Units.inchesToMeters(76.1);
+    
     public static final Pose2d centerToCloseNote = new Pose2d(2.32, 2.66, Rotation2d.fromDegrees(0));
     public static final Pose2d atLeftNote = new Pose2d(2.896, 1.22, new Rotation2d());
     public static final Pose2d centerToLeftNote = 
@@ -204,7 +208,7 @@ public final class Constants {
     
     public static final double kMaxSpeedMetersPerSecond = 3;
     public static final double kMaxAccelerationMetersPerSecondSquared = 3;
-    public static final double kMaxAngularSpeedRadiansPerSecond = Math.PI;
+    public static final double kMaxAngularSpeedRadiansPerSecond = 2*Math.PI;
     public static final double kMaxAngularSpeedRadiansPerSecondSquared = Math.PI;
 
     public static final double kPXController = 1;
