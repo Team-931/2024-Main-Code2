@@ -289,6 +289,7 @@ public class RobotContainer {
     var end = maybeReflect.apply(AutoConstants.speakerRight .div(AutoConstants.distanceFudge).plus(rectCtr .rotateBy(endAngle)));
          endAngle = endAngle.times(allianceSign);
          finalPose = new Pose2d(end, endAngle);
+    var finalPose1 = new Pose2d(end, endAngle.plus(AutoConstants.piRot));
          finalAngle = AutoConstants.piRot.minus(endAngle);
          var initPose = new Pose2d(init, initAngle);
          m_robotDrive.resetOdometry(initPose);
@@ -296,7 +297,7 @@ public class RobotContainer {
       retval[0] = TrajectoryGenerator.generateTrajectory(
         initPose,
         List.of(),
-        finalPose,
+        finalPose1,
         config);
       retval[1] = TrajectoryGenerator.generateTrajectory(
         finalPose,
@@ -338,8 +339,11 @@ public class RobotContainer {
    static ProfiledPIDController thetaController = new ProfiledPIDController(
         AutoConstants.kPThetaController, 0, 0, AutoConstants.kThetaControllerConstraints);
     
+    {
+      thetaController.enableContinuousInput(-Math.PI, Math.PI);
+    }
+    
     SwerveControllerCommand swerveControllerCommand(Trajectory trajectory) {
-    thetaController.enableContinuousInput(-Math.PI, Math.PI);
     // Reset odometry to the starting pose of the trajectory.
     return new SwerveControllerCommand(
         trajectory,
@@ -350,6 +354,22 @@ public class RobotContainer {
         new PIDController(AutoConstants.kPXController, 0, 0),
         new PIDController(AutoConstants.kPYController, 0, 0),
         thetaController,
+        m_robotDrive::setModuleStates,
+        m_robotDrive);
+    }
+    SwerveControllerCommand swerveControllerAngleRequestCommand(Trajectory trajectory, Rotation2d endRotation2d) {
+    // Reset odometry to the starting pose of the trajectory.
+    Rotation2d angleChange = endRotation2d .minus(trajectory.getInitialPose().getRotation());
+    return new SwerveControllerCommand(
+        trajectory,
+        m_robotDrive::getPose, // Functional interface to feed supplier
+        DriveConstants.kDriveKinematics,
+
+        // Position controllers
+        new PIDController(AutoConstants.kPXController, 0, 0),
+        new PIDController(AutoConstants.kPYController, 0, 0),
+        thetaController,
+        () -> endRotation2d,
         m_robotDrive::setModuleStates,
         m_robotDrive);
     }
@@ -472,7 +492,7 @@ public class RobotContainer {
           SmartDashboard.getNumber("starting y", 0));
 
         return new SequentialCommandGroup(
-      autoMaker.swerveControllerCommand(indexStage[0]),
+      autoMaker.swerveControllerAngleRequestCommand(indexStage[0], AutoMaker.finalPose.getRotation()),
       new Rotator(AutoMaker.finalAngle),
       new ParallelCommandGroup
       (m_robotDrive.runOnce(() -> m_robotDrive.drive(0, 0, 0, false, false)),
