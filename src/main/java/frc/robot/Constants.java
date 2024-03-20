@@ -197,14 +197,22 @@ public final class Constants {
     
     public static final double allianceZoneLimit = Units.inchesToMeters(76.1);
     
-    public static final Pose2d centerToCloseNote = new Pose2d(2.32, 2.66, Rotation2d.fromDegrees(0));
+    public static final Transform2d pickupOffset = new Transform2d(.576, 0, Rotation2d.fromDegrees(0));
+    public static final Pose2d atCenterNote = new Pose2d(2.896, 2.66, new Rotation2d());
+    public static final Pose2d centerToCloseNote = 
+      atCenterNote
+       .plus(pickupOffset)
+       .plus(new Transform2d(new Translation2d(), Rotation2d.fromDegrees(0)));
     public static final Pose2d atLeftNote = new Pose2d(2.896, 1.22, new Rotation2d());
     public static final Pose2d centerToLeftNote = 
       atLeftNote
-       .plus(new Pose2d(2.32, 1.22, Rotation2d.fromDegrees(0))
-       .minus(atLeftNote)
-       .plus(new Transform2d(new Translation2d(), Rotation2d.fromDegrees(-30))));
-    public static final Translation2d leftExtra = new Translation2d(2, 1.22);
+       .plus(pickupOffset)
+       .plus(new Transform2d(new Translation2d(), Rotation2d.fromDegrees(-30)));
+    public static final Pose2d atRightNote = new Pose2d(2.896, 2.66, new Rotation2d());
+    public static final Pose2d centerToRightNote = 
+      atRightNote
+       .plus(pickupOffset)
+       .plus(new Transform2d(new Translation2d(), Rotation2d.fromDegrees(30)));
     
     public static final double kMaxSpeedMetersPerSecond = 3;
     public static final double kMaxAccelerationMetersPerSecondSquared = 3;
