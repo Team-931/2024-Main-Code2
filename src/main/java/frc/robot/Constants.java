@@ -187,10 +187,11 @@ public final class Constants {
 
   public static final class AutoConstants {
     static final Rotation2d piRot = Rotation2d.fromRotations(.5);
-    public static final double distanceFudge = 1,
-              inverseFudge = 1 / distanceFudge;
     public static final double speakerAngle = 60;
-    public static final Translation2d speakerRight = new Translation2d(.90, 3.13);
+    public static final Translation2d speakerRight = new Translation2d(.90, 3.2);
+    public static final Pose2d leaveRight = new Pose2d(2.64, Units.inchesToMeters(240), new Rotation2d());
+    public static final Translation2d speakerLeft = new Translation2d(.33, 1.62);
+    public static final Pose2d leaveLeft = new Pose2d(2.64, Units.inchesToMeters(2), new Rotation2d());
     public static final double allianceZoneLimit = Units.inchesToMeters(76.1);
     public static final Pose2d centerToCloseNote = new Pose2d(2.32, 2.66, Rotation2d.fromDegrees(0));
     public static final Pose2d atLeftNote = new Pose2d(2.896, 1.22, new Rotation2d());

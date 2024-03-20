@@ -13,7 +13,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
@@ -111,7 +110,7 @@ public class RobotContainer {
     // Configure the button bindings
     configureButtonBindings();
     autoChooser.addOption("example", 0); //autoMaker.swerveControllerCommand(AutoMaker.exampleTrajectory)
-    autoChooser.addOption("to speaker right", 1);
+    autoChooser.addOption("to speaker", 1);
     autoChooser.addOption("From Center Two Notes", 2);
     autoChooser.addOption("From Center Three Notes", 3);
     SmartDashboard.putData(autoChooser);
@@ -279,18 +278,34 @@ public class RobotContainer {
         new Pose2d(3, 0, finalAngle),
          config);
 
-         final Translation2d rectCtr = new Translation2d(DriveConstants.kWheelBase,DriveConstants.kTrackWidth).div(2*AutoConstants.distanceFudge);
-    Trajectory[] toSpeakerRight(double x, double y)  {
+         final Translation2d rectCtr = new Translation2d(DriveConstants.kWheelBase,DriveConstants.kTrackWidth).div(2);
+    Trajectory[] toSpeaker(double x, double y)  {
     var retval = new Trajectory[2];
     
     var initAngle = Rotation2d.fromDegrees(0);
-    var init = maybeReflect.apply(new Translation2d (x, y) .div(AutoConstants.distanceFudge).plus(rectCtr .rotateBy(initAngle)));
-    var endAngle = Rotation2d.fromDegrees(AutoConstants.speakerAngle);
-    var end = maybeReflect.apply(AutoConstants.speakerRight .div(AutoConstants.distanceFudge).plus(rectCtr .rotateBy(endAngle)));
+    var init = maybeReflect.apply(new Translation2d (x, y) .plus(rectCtr .rotateBy(initAngle)));
+    double speakerAngle = AutoConstants.speakerAngle;
+    Translation2d speakerTranslation2d;
+    Pose2d leavePose;
+
+    if (y < AutoConstants.centerToCloseNote.getY()) {
+      speakerAngle = - AutoConstants.speakerAngle;
+      speakerTranslation2d = AutoConstants.speakerLeft;
+      leavePose = AutoConstants.leaveLeft;
+    }
+    else {
+      speakerAngle = AutoConstants.speakerAngle;
+      speakerTranslation2d = AutoConstants.speakerRight;
+      leavePose = AutoConstants.leaveRight;
+    }
+
+    var endAngle = Rotation2d.fromDegrees(speakerAngle);
+    var end = maybeReflect.apply(speakerTranslation2d .plus(rectCtr .rotateBy(endAngle)));
          endAngle = endAngle.times(allianceSign);
          finalPose = new Pose2d(end, endAngle);
     var finalPose1 = new Pose2d(end, endAngle.plus(AutoConstants.piRot));
          finalAngle = AutoConstants.piRot.minus(endAngle);
+    leavePose = new Pose2d(maybeReflect.apply(leavePose.getTranslation() .plus(rectCtr .rotateBy(leavePose.getRotation()))), leavePose.getRotation());
          var initPose = new Pose2d(init, initAngle);
          m_robotDrive.resetOdometry(initPose);
     
@@ -302,7 +317,7 @@ public class RobotContainer {
       retval[1] = TrajectoryGenerator.generateTrajectory(
         finalPose,
        List.of(),
-       new Pose2d(AutoConstants.allianceZoneLimit + DriveConstants.kWheelBase+.05, Units.inchesToMeters(allianceSign * 240), new Rotation2d()), config);
+       leavePose, config);
     return retval;
     }
 
@@ -359,7 +374,7 @@ public class RobotContainer {
     }
     SwerveControllerCommand swerveControllerAngleRequestCommand(Trajectory trajectory, Rotation2d endRotation2d) {
     // Reset odometry to the starting pose of the trajectory.
-    Rotation2d angleChange = endRotation2d .minus(trajectory.getInitialPose().getRotation());
+    //Rotation2d angleChange = endRotation2d .minus(trajectory.getInitialPose().getRotation());
     return new SwerveControllerCommand(
         trajectory,
         m_robotDrive::getPose, // Functional interface to feed supplier
@@ -487,16 +502,17 @@ public class RobotContainer {
         )
 ;
       case 1: // one note from side
-      indexStage = autoMaker.toSpeakerRight(
+      indexStage = autoMaker.toSpeaker(
           SmartDashboard.getNumber("starting x", 0), 
           SmartDashboard.getNumber("starting y", 0));
 
         return new SequentialCommandGroup(
-      autoMaker.swerveControllerAngleRequestCommand(indexStage[0], AutoMaker.finalPose.getRotation()),
+      new ParallelCommandGroup(
+        autoMaker.swerveControllerAngleRequestCommand(indexStage[0], AutoMaker.finalPose.getRotation()),
+        shooter.shootCommand(1)
+      ),
       new Rotator(AutoMaker.finalAngle),
-      new ParallelCommandGroup
-      (m_robotDrive.runOnce(() -> m_robotDrive.drive(0, 0, 0, false, false)),
-      shooter.shootCommand(1)),
+      //m_robotDrive.runOnce(() -> m_robotDrive.drive(0, 0, 0, false, false)),
       new WaitUntilCommand(shooter::shootFastEnough),
       shooter.holdCommand(ShooterConstants.holdFwd),
       new WaitCommand(1), // Could we wait for shooter::sensorOff, instead?
