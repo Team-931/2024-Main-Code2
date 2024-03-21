@@ -208,7 +208,7 @@ public final class Constants {
       atLeftNote
        .plus(pickupOffset)
        .plus(new Transform2d(new Translation2d(), Rotation2d.fromDegrees(-30)));
-    public static final Pose2d atRightNote = new Pose2d(2.896, 2.66, new Rotation2d());
+    public static final Pose2d atRightNote = new Pose2d(2.896, 4.10, new Rotation2d());
     public static final Pose2d centerToRightNote = 
       atRightNote
        .plus(pickupOffset)
