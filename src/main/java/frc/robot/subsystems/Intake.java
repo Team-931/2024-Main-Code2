@@ -16,14 +16,14 @@ public class Intake extends SubsystemBase {
     private double running = 0;
     public Command runcommand (double r) {
         return runOnce(
-            () -> {running = r;
+            () -> {running = r * IntakeConstants.dutyCycle;
                 /* SmartDashboard.putNumber("intake", r); */});
     }
  
     public Command runIf(double r, BooleanSupplier cond) {
         return runOnce(
             () -> {
-                running = cond.getAsBoolean() ? r: 0;
+                running = cond.getAsBoolean() ? r * IntakeConstants.dutyCycle: 0;
                 /* SmartDashboard.putNumber("intake", running); */
             }
         );

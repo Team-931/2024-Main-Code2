@@ -202,9 +202,9 @@ public class RobotContainer {
       shooter.holdCommand(0) .andThen(intake.runcommand(0), rumble(false)),
 
       shooter.holdCommand(ShooterConstants.holdFwd)
-          .andThen(intake.runIf(.3, arm::atBottom), rumble(false)),
+          .andThen(intake.runIf(1, arm::atBottom), rumble(false)),
       shooter.holdCommand(ShooterConstants.holdRvs)
-          .andThen(intake.runIf(-.3, arm::atBottom), rumble(false)),
+          .andThen(intake.runIf(-1, arm::atBottom), rumble(false)),
     // rumble if the line break senses a "note"
       rumble(true)
               .andThen(
@@ -428,7 +428,7 @@ public class RobotContainer {
         new ParallelCommandGroup(
             autoMaker.swerveControllerCommand(indexStage[0]),
             shooter.holdCommand(ShooterConstants.holdFwd)
-            .andThen(intake.runIf(.3, arm::atBottom), 
+            .andThen(intake.runIf(1, arm::atBottom), 
             new ParallelRaceGroup(new WaitUntilCommand(()->!shooter.sensorOff()), new WaitCommand(indexStage[0].getTotalTimeSeconds() + 1.5)), 
             shooter.holdCommand(0), 
             intake.runcommand(0))
@@ -468,7 +468,7 @@ public class RobotContainer {
         new ParallelCommandGroup(
             autoMaker.swerveControllerCommand(indexStage[0]),
             shooter.holdCommand(ShooterConstants.holdFwd)
-            .andThen(intake.runIf(.3, arm::atBottom), 
+            .andThen(intake.runIf(1, arm::atBottom), 
             new ParallelRaceGroup(new WaitUntilCommand(()->!shooter.sensorOff()), new WaitCommand(indexStage[0].getTotalTimeSeconds() + 1.5)), 
             shooter.holdCommand(0), 
             intake.runcommand(0))
@@ -486,7 +486,7 @@ public class RobotContainer {
         new ParallelCommandGroup(
             autoMaker.swerveControllerCommand(indexStage2[0]),
             shooter.holdCommand(ShooterConstants.holdFwd)
-            .andThen(intake.runIf(.3, arm::atBottom), 
+            .andThen(intake.runIf(1, arm::atBottom), 
             new ParallelRaceGroup(new WaitUntilCommand(()->!shooter.sensorOff()), new WaitCommand(indexStage[0].getTotalTimeSeconds() + 1.5)), 
             shooter.holdCommand(0), 
             intake.runcommand(0))

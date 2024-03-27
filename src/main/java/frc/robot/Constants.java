@@ -56,10 +56,11 @@ public final class Constants {
   }
   
   public static class IntakeConstants {
-  
-    
-   public static final int intakeID = 15;
+    public static final int intakeID = 15;
+    private static final double gearDif = 1;
+    public static final double dutyCycle = ShooterConstants.intakeRotationalSpeedReverse*gearDif;
   }
+
   public static class  ArmConstants {
     public static final double gearing = 5 /* sprocket */ * 100 /* gearbox */ /1;
     public static final int ArmID = 10,
