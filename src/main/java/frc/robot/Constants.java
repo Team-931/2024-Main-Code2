@@ -43,7 +43,7 @@ public final class Constants {
   public static class ClimberConstants {
   
     public static final int leftID = 11, rightID = 12;
-    public static final double gearbox = 12, gearing = gearbox / .75 /* in. diam */ / Math.PI;
+    public static final double gearbox = 36, gearing = gearbox / .75 /* in. diam */ / Math.PI;
     /** The maxHeight is physically 19.5 in. but the gearing is too large 
      * at the bottom: the diameter increases as the rope winds up.
      */
@@ -190,13 +190,19 @@ public final class Constants {
     public static final double speakerAngle = 60;
     public static final Translation2d speakerRight = new Translation2d(.90, 3.2);
     public static final Pose2d leaveRight = new Pose2d(2.64, Units.inchesToMeters(240), new Rotation2d());
+    //public static final double speakerRightStartX = 0;
+    //public static final double speakerRightStartY = 4.94;
 
     public static final Translation2d speakerLeft = new Translation2d(.38, 1.42);
     public static final Pose2d leaveLeft = new Pose2d(2.34, 0, new Rotation2d());
     public static final Translation2d waypointLeft = new Translation2d(1.05, .85);
+    //public static final double speakerLeftStartX = 0;
+    //public static final double speakerLeftStartY = 0;
     
     public static final double allianceZoneLimit = Units.inchesToMeters(76.1);
     
+    public static final double centerScoreStartX = 0.9;
+    public static final double centerScoreStartY = 2.66;
     public static final Transform2d pickupOffset = new Transform2d(.576, 0, Rotation2d.fromDegrees(0));
     public static final Pose2d atCenterNote = new Pose2d(2.896, 2.66, new Rotation2d());
     public static final Pose2d centerToCloseNote = 
@@ -213,6 +219,7 @@ public final class Constants {
       atRightNote
        .plus(pickupOffset)
        .plus(new Transform2d(new Translation2d(), Rotation2d.fromDegrees(30)));
+    
     
     public static final double kMaxSpeedMetersPerSecond = 3;
     public static final double kMaxAccelerationMetersPerSecondSquared = 3;

@@ -411,8 +411,8 @@ public class RobotContainer {
     switch (choice) {
       case 2: // two notes
         var indexStage = autoMaker.fromCenterToCloseNote(
-          SmartDashboard.getNumber("starting x", 0), 
-          SmartDashboard.getNumber("starting y", 0),
+          AutoConstants.centerScoreStartX, 
+          AutoConstants.centerScoreStartY,
           AutoConstants.centerToCloseNote);
         return new SequentialCommandGroup(
           shooter.shootCommand(1),
@@ -447,12 +447,12 @@ public class RobotContainer {
 ;
   case 3: //Three notes
         indexStage = autoMaker.fromCenterToCloseNote(
-          SmartDashboard.getNumber("starting x", 0), 
-          SmartDashboard.getNumber("starting y", 0),
+          AutoConstants.centerScoreStartX, 
+          AutoConstants.centerScoreStartY,
           AutoConstants.centerToCloseNote);
         var indexStage2  = autoMaker.fromCenterToCloseNote(
-          SmartDashboard.getNumber("starting x", 0), 
-          SmartDashboard.getNumber("starting y", 0),
+          AutoConstants.centerScoreStartX, 
+          AutoConstants.centerScoreStartY,
           AutoConstants.centerToLeftNote);
         return new SequentialCommandGroup(
           shooter.shootCommand(1),
