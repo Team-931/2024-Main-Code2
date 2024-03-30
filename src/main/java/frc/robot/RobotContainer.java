@@ -181,52 +181,55 @@ public class RobotContainer {
         }
       }
     /* y axis: forward and reverse shooter hold */
-    new MultiBind (
-      new IntSupplier() {
-          boolean haveJustGottenNote =false;
-        
-      public int getAsInt()  {
-        var val = opStick.getRawAxis(OperatorConstants.intakeAxis);
-        if (val > OperatorConstants.intakeTheshhold) if (!haveJustGottenNote)
-          if (shooter.sensorOff() ) return 1;
-          else {
-            haveJustGottenNote = true;
-            return 3;
-          } else;
-        else {
-          haveJustGottenNote = false;
-          if (val < -OperatorConstants.intakeTheshhold) return 2;
-        }
+   new MultiBind (
+      () -> {
+                var val = opStick.getRawAxis(OperatorConstants.intakeAxis);
+        if (val > OperatorConstants.intakeTheshhold /*  && shooter.sensorOff() */ ) return 1;
+        if (val < -OperatorConstants.intakeTheshhold) return 2;
         return 0;
-      }}, 
-      shooter.holdCommand(0) .andThen(intake.runcommand(0), rumble(false)),
-
+      }, 
+      shooter.holdCommand(0) .andThen(intake.runcommand(0)),
       shooter.holdCommand(ShooterConstants.holdFwd)
-          .andThen(intake.runIf(1, arm::atBottom), rumble(false)),
-      shooter.holdCommand(ShooterConstants.holdRvs)
-          .andThen(intake.runIf(-1, arm::atBottom), rumble(false)),
-    // rumble if the line break senses a "note"
-      rumble(true)
-              .andThen(
-                shooter.holdCommand(ShooterConstants.holdRvs*.25),
-                new WaitUntilCommand(shooter::sensorOff),
-                shooter.holdCommand(0))
+          .andThen(intake.runIf(1, arm::atBottom)),
+      shooter.holdCommand(ShooterConstants.holdRvs * 0.05)
+          .andThen(intake.runIf(-1, arm::atBottom))
       );
+    Trigger teleopTrigger = new Trigger(DriverStation::isTeleop);
+    // rumble if the line break senses a "note"
+    teleopTrigger .and (new Trigger (shooter::sensorOff))
+            .onFalse(rumble(true)
+              .andThen(
+                shooter.holdCommand(ShooterConstants.holdRvs*.05),
+                intake.runcommand(0),
+                new WaitUntilCommand(shooter::sensorOff),
+                shooter.holdCommand(0)))
+            .onTrue(rumble(false));
+    teleopTrigger .and(new Trigger(() -> rumbleTimer.hasElapsed(1)))//doesn't work
+            .onTrue(rumble(false));
     
     
     /* y button: shooter shoot */
       opStick.button(1)
                   .onTrue(shooter.shootCommand(1)
-                      .andThen(shooter.holdCommand((ShooterConstants.holdFwd)*2))) 
+                      .andThen(shooter.holdCommand((ShooterConstants.holdFwd)*2))
+                      .andThen(intake.runcommand(-1)))
                   .onFalse(shooter.shootCommand(0)
-                      .andThen(shooter.holdCommand(0)));
+                      .andThen(shooter.holdCommand(0))
+                      .andThen(intake.runcommand(0)));
       opStick.button(5)  .onTrue(shooter.shootCommand(1))
-                                .onFalse(shooter.shootCommand(0));
+                                .onFalse(shooter.shootCommand(0))
+                                .onTrue(arm.shootPosCommand(true))
+                                .onFalse(arm.shootPosCommand(false))
+                                .onTrue(intake.runcommand(1))
+                                .onFalse(intake.runcommand(0));
+
+                        
       opStick.button(6)  .onTrue(shooter.holdCommand(ShooterConstants.holdFwd))
                                 .onFalse(shooter.holdCommand(0));
       /* a button: arm up */
       opStick.button(2) .onTrue(arm.upCmd(true));
       opStick.button(7) .onTrue(arm.upCmd(false));
+
 
       /* x button: release climber */
       opStick.button(3) .and(opStick.button(4).negate()) .onTrue(climber.topOrBottomCommand(true))
@@ -418,17 +421,19 @@ public class RobotContainer {
           shooter.shootCommand(1),
       new ParallelCommandGroup(
         new WaitUntilCommand(shooter::shootFastEnough),
+        arm.shootPosCommand(true),
         new WaitCommand(1)
         ),
           shooter.holdCommand(ShooterConstants.holdFwd),
           new WaitCommand(1), // Could we wait for shooter::sensorOff, instead?
           shooter.shootCommand(0),
           shooter.holdCommand(0), 
+          arm.shootPosCommand(false),
 
         new ParallelCommandGroup(
             autoMaker.swerveControllerCommand(indexStage[0]),
-            shooter.holdCommand(ShooterConstants.holdFwd)
-            .andThen(intake.runIf(1, arm::atBottom), 
+            shooter.holdCommand(ShooterConstants.holdFwd*0.25)
+            .andThen(intake.runcommand(1), 
             new ParallelRaceGroup(new WaitUntilCommand(()->!shooter.sensorOff()), new WaitCommand(indexStage[0].getTotalTimeSeconds() + 1.5)), 
             shooter.holdCommand(0), 
             intake.runcommand(0))
@@ -437,12 +442,14 @@ public class RobotContainer {
           
          new ParallelCommandGroup
             (autoMaker.swerveControllerCommand(indexStage[1]),
+         arm.shootPosCommand(true),
          shooter.shootCommand(1)),
           new WaitUntilCommand(shooter::shootFastEnough),
           shooter.holdCommand(ShooterConstants.holdFwd),
           new WaitCommand(1), // Could we wait for shooter::sensorOff, instead?
           shooter.shootCommand(0),
-          shooter.holdCommand(0)
+          shooter.holdCommand(0),
+          arm.shootPosCommand(false)
         )
 ;
   case 3: //Three notes
@@ -455,6 +462,7 @@ public class RobotContainer {
           AutoConstants.centerScoreStartY,
           AutoConstants.centerToLeftNote);
         return new SequentialCommandGroup(
+          arm.shootPosCommand(true),
           shooter.shootCommand(1),
       new ParallelCommandGroup(
         new WaitUntilCommand(shooter::shootFastEnough),
@@ -464,11 +472,12 @@ public class RobotContainer {
           new WaitCommand(1), // Could we wait for shooter::sensorOff, instead?
           shooter.shootCommand(0),
           shooter.holdCommand(0), 
+          arm.shootPosCommand(false),
 
         new ParallelCommandGroup(
             autoMaker.swerveControllerCommand(indexStage[0]),
-            shooter.holdCommand(ShooterConstants.holdFwd)
-            .andThen(intake.runIf(1, arm::atBottom), 
+            shooter.holdCommand(ShooterConstants.holdFwd * 0.25)
+            .andThen(intake.runcommand(1), 
             new ParallelRaceGroup(new WaitUntilCommand(()->!shooter.sensorOff()), new WaitCommand(indexStage[0].getTotalTimeSeconds() + 1.5)), 
             shooter.holdCommand(0), 
             intake.runcommand(0))
@@ -477,16 +486,18 @@ public class RobotContainer {
           
          new ParallelCommandGroup
             (autoMaker.swerveControllerCommand(indexStage[1]),
+         arm.shootPosCommand(true),
          shooter.shootCommand(1)),
           new WaitUntilCommand(shooter::shootFastEnough),
           shooter.holdCommand(ShooterConstants.holdFwd),
           new WaitCommand(1), // Could we wait for shooter::sensorOff, instead?
           shooter.shootCommand(0),
           shooter.holdCommand(0) ,
+          arm.shootPosCommand(false),
         new ParallelCommandGroup(
             autoMaker.swerveControllerCommand(indexStage2[0]),
-            shooter.holdCommand(ShooterConstants.holdFwd)
-            .andThen(intake.runIf(1, arm::atBottom), 
+            shooter.holdCommand(ShooterConstants.holdFwd * 0.25)
+            .andThen(intake.runcommand(1), 
             new ParallelRaceGroup(new WaitUntilCommand(()->!shooter.sensorOff()), new WaitCommand(indexStage[0].getTotalTimeSeconds() + 1.5)), 
             shooter.holdCommand(0), 
             intake.runcommand(0))
@@ -495,11 +506,13 @@ public class RobotContainer {
           
          new ParallelCommandGroup
             (autoMaker.swerveControllerCommand(indexStage2[1]),
+         arm.shootPosCommand(true),
          shooter.shootCommand(1)),
           new WaitUntilCommand(shooter::shootFastEnough),
           shooter.holdCommand(ShooterConstants.holdFwd),
           new WaitCommand(1), // Could we wait for shooter::sensorOff, instead?
           shooter.shootCommand(0),
+          arm.shootPosCommand(false),
           shooter.holdCommand(0) 
         )
 ;

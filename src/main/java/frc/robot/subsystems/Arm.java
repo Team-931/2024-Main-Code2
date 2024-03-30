@@ -79,6 +79,9 @@ public class Arm  extends SubsystemBase{
     public Command upCmd(boolean b) {
         return runOnce(() -> {gotoAngle(b ? ArmConstants.upperLimit: ArmConstants.lowerLimit);});
     }
+    public Command shootPosCommand(boolean b){
+        return runOnce(()-> {gotoAngle(b ? ArmConstants.upperLimit*0.2465 : ArmConstants.lowerLimit);});
+    }
     public void gotoAngle(double angle) {
         angle = Math.max(angle, ArmConstants.lowerLimit);
         angle = Math.min(angle, ArmConstants.upperLimit);
