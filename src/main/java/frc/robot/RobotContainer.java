@@ -191,7 +191,7 @@ public class RobotContainer {
       shooter.holdCommand(0) .andThen(intake.runcommand(0)),
       shooter.holdCommand(ShooterConstants.holdFwd)
           .andThen(intake.runIf(1, arm::atBottom)),
-      shooter.holdCommand(ShooterConstants.holdRvs * 0.05)
+      shooter.holdCommand(ShooterConstants.holdRvs * 0.3)
           .andThen(intake.runIf(-1, arm::atBottom))
       );
     Trigger teleopTrigger = new Trigger(DriverStation::isTeleop);
@@ -452,7 +452,7 @@ public class RobotContainer {
           arm.shootPosCommand(false)
         )
 ;
-  case 3: //Three notes
+  case 3: //Four notes
         indexStage = autoMaker.fromCenterToCloseNote(
           AutoConstants.centerScoreStartX, 
           AutoConstants.centerScoreStartY,
@@ -460,16 +460,21 @@ public class RobotContainer {
         var indexStage2  = autoMaker.fromCenterToCloseNote(
           AutoConstants.centerScoreStartX, 
           AutoConstants.centerScoreStartY,
+          AutoConstants.centerToRightNote);
+        var indexStage3 = autoMaker.fromCenterToCloseNote(
+          AutoConstants.centerScoreStartX, 
+          AutoConstants.centerScoreStartY,
           AutoConstants.centerToLeftNote);
+
         return new SequentialCommandGroup(
           arm.shootPosCommand(true),
           shooter.shootCommand(1),
       new ParallelCommandGroup(
         new WaitUntilCommand(shooter::shootFastEnough),
-        new WaitCommand(1)
+        new WaitCommand(0.5)
         ),
           shooter.holdCommand(ShooterConstants.holdFwd),
-          new WaitCommand(1), // Could we wait for shooter::sensorOff, instead?
+          new WaitCommand(0.5), // Could we wait for shooter::sensorOff, instead?
           shooter.shootCommand(0),
           shooter.holdCommand(0), 
           arm.shootPosCommand(false),
@@ -490,7 +495,7 @@ public class RobotContainer {
          shooter.shootCommand(1)),
           new WaitUntilCommand(shooter::shootFastEnough),
           shooter.holdCommand(ShooterConstants.holdFwd),
-          new WaitCommand(1), // Could we wait for shooter::sensorOff, instead?
+          new WaitCommand(0.5), // Could we wait for shooter::sensorOff, instead?
           shooter.shootCommand(0),
           shooter.holdCommand(0) ,
           arm.shootPosCommand(false),
@@ -510,11 +515,34 @@ public class RobotContainer {
          shooter.shootCommand(1)),
           new WaitUntilCommand(shooter::shootFastEnough),
           shooter.holdCommand(ShooterConstants.holdFwd),
-          new WaitCommand(1), // Could we wait for shooter::sensorOff, instead?
+          new WaitCommand(0.5), // Could we wait for shooter::sensorOff, instead?
           shooter.shootCommand(0),
           arm.shootPosCommand(false),
-          shooter.holdCommand(0) 
+          shooter.holdCommand(0),
+
+        new ParallelCommandGroup(
+            autoMaker.swerveControllerCommand(indexStage3[0]),
+            shooter.holdCommand(ShooterConstants.holdFwd * 0.25)
+            .andThen(intake.runcommand(1), 
+            new ParallelRaceGroup(new WaitUntilCommand(()->!shooter.sensorOff()), new WaitCommand(indexStage[0].getTotalTimeSeconds() + 1.5)), 
+            shooter.holdCommand(0), 
+            intake.runcommand(0))
+            ),
+
+          
+         new ParallelCommandGroup
+            (autoMaker.swerveControllerCommand(indexStage3[1]),
+         arm.shootPosCommand(true),
+         shooter.shootCommand(1)),
+          new WaitUntilCommand(shooter::shootFastEnough),
+          shooter.holdCommand(ShooterConstants.holdFwd),
+          new WaitCommand(0.5), // Could we wait for shooter::sensorOff, instead?
+          shooter.shootCommand(0),
+          arm.shootPosCommand(false),
+          shooter.holdCommand(0)
+
         )
+
 ;
       case 1: // one note from side
       indexStage = autoMaker.toSpeaker(
