@@ -223,6 +223,8 @@ public class RobotContainer {
                                 .onTrue(intake.runcommand(1))
                                 .onFalse(intake.runcommand(0));
 
+      m_driverController.a().and(opStick.button(5)) .onTrue(arm.shootFarCommand(true))
+                                                    .onFalse(arm.shootFarCommand(false));
                         
       opStick.button(6)  .onTrue(shooter.holdCommand(ShooterConstants.holdFwd))
                                 .onFalse(shooter.holdCommand(0));
@@ -548,10 +550,10 @@ public class RobotContainer {
       indexStage = autoMaker.toSpeaker(
           SmartDashboard.getNumber("starting x", 0), 
           SmartDashboard.getNumber("starting y", 0));
-
         return new SequentialCommandGroup(
       new ParallelCommandGroup(
         autoMaker.swerveControllerAngleRequestCommand(indexStage[0], AutoMaker.finalPose.getRotation()),
+        arm.shootPosCommand(true),
         shooter.shootCommand(1)
       ),
       new Rotator(AutoMaker.finalAngle),
@@ -560,9 +562,17 @@ public class RobotContainer {
       shooter.holdCommand(ShooterConstants.holdFwd),
       new WaitCommand(1), // Could we wait for shooter::sensorOff, instead?
       shooter.shootCommand(0),
+      arm.shootPosCommand(false),
       shooter.holdCommand(0),
-      autoMaker.swerveControllerCommand(indexStage[1]),
-      new Rotator(AutoConstants.piRot)
+      new ParallelCommandGroup(
+       autoMaker.swerveControllerCommand(indexStage[1]),
+       shooter.holdCommand(ShooterConstants.holdFwd * 0.25)
+            .andThen(intake.runcommand(1), 
+            new ParallelRaceGroup(new WaitUntilCommand(()->!shooter.sensorOff()), new WaitCommand(indexStage[0].getTotalTimeSeconds() + 3.5)), 
+            shooter.holdCommand(0), 
+            intake.runcommand(0))),
+       new Rotator(AutoConstants.piRot)
+
       );
 
       case 0:

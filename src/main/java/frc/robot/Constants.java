@@ -190,7 +190,7 @@ public final class Constants {
     static final Rotation2d piRot = Rotation2d.fromRotations(.5);
     public static final double speakerAngle = 60;
     public static final Translation2d speakerRight = new Translation2d(.90, 3.2);
-    public static final Pose2d leaveRight = new Pose2d(2.64, Units.inchesToMeters(240), new Rotation2d());
+    public static final Pose2d leaveRight = new Pose2d(8.24, Units.inchesToMeters(280), new Rotation2d());
     //public static final double speakerRightStartX = 0;
     //public static final double speakerRightStartY = 4.94;
 
