@@ -188,10 +188,11 @@ public class RobotContainer {
         if (val < -OperatorConstants.intakeTheshhold) return 2;
         return 0;
       }, 
-      shooter.holdCommand(0) .andThen(intake.runcommand(0)),
+      shooter.holdCommand(0) .andThen(intake.runcommand(0)) .andThen(shooter.shootCommand(0)),
       shooter.holdCommand(ShooterConstants.holdFwd)
           .andThen(intake.runIf(1, arm::atBottom)),
-      shooter.holdCommand(ShooterConstants.holdRvs * 0.3)
+      shooter.holdCommand(ShooterConstants.holdRvs * 0.4)
+          .andThen(shooter.shootCommand(-0.2))
           .andThen(intake.runIf(-1, arm::atBottom))
       );
     Trigger teleopTrigger = new Trigger(DriverStation::isTeleop);
@@ -223,8 +224,8 @@ public class RobotContainer {
                                 .onTrue(intake.runcommand(1))
                                 .onFalse(intake.runcommand(0));
 
-     // m_driverController.a().and(opStick.button(5)) .onTrue(arm.shootFarCommand(true))
-       //                                             .onFalse(arm.shootFarCommand(false));
+      //m_driverController.a().and(opStick.button(5)) .onTrue(arm.shootFarCommand(true))
+        //                                            .onFalse(arm.shootFarCommand(false));
                         
       opStick.button(6)  .onTrue(shooter.holdCommand(ShooterConstants.holdFwd))
                                 .onFalse(shooter.holdCommand(0));
