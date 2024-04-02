@@ -223,8 +223,8 @@ public class RobotContainer {
                                 .onTrue(intake.runcommand(1))
                                 .onFalse(intake.runcommand(0));
 
-      m_driverController.a().and(opStick.button(5)) .onTrue(arm.shootFarCommand(true))
-                                                    .onFalse(arm.shootFarCommand(false));
+     // m_driverController.a().and(opStick.button(5)) .onTrue(arm.shootFarCommand(true))
+       //                                             .onFalse(arm.shootFarCommand(false));
                         
       opStick.button(6)  .onTrue(shooter.holdCommand(ShooterConstants.holdFwd))
                                 .onFalse(shooter.holdCommand(0));
