@@ -110,9 +110,9 @@ public class RobotContainer {
     // Configure the button bindings
     configureButtonBindings();
     autoChooser.addOption("example", 0); //autoMaker.swerveControllerCommand(AutoMaker.exampleTrajectory)
-    autoChooser.addOption("to speaker", 1);
+    autoChooser.addOption("to speaker and leave", 1);
     autoChooser.addOption("From Center Two Notes", 2);
-    autoChooser.addOption("From Center Three Notes", 3);
+    autoChooser.addOption("From Center Four Notes", 3);
     SmartDashboard.putData(autoChooser);
     SmartDashboard.setDefaultNumber("starting x", 0);
     SmartDashboard.setPersistent("starting x");
@@ -434,11 +434,13 @@ public class RobotContainer {
 
         new ParallelCommandGroup(
             autoMaker.swerveControllerCommand(indexStage[0]),
-            shooter.holdCommand(ShooterConstants.holdFwd*0.25)
+            shooter.holdCommand(ShooterConstants.holdFwd*0.3)
             .andThen(intake.runcommand(1), 
             new ParallelRaceGroup(new WaitUntilCommand(()->!shooter.sensorOff()), new WaitCommand(indexStage[0].getTotalTimeSeconds() + 1.5)), 
-            shooter.holdCommand(0), 
-            intake.runcommand(0))
+            intake.runcommand(0),
+            shooter.holdCommand(ShooterConstants.holdRvs*.25),
+                new WaitUntilCommand(shooter::sensorOff),
+            shooter.holdCommand(0)) 
             ),
 
           
@@ -483,11 +485,14 @@ public class RobotContainer {
 
         new ParallelCommandGroup(
             autoMaker.swerveControllerCommand(indexStage[0]),
-            shooter.holdCommand(ShooterConstants.holdFwd * 0.25)
+            shooter.holdCommand(ShooterConstants.holdFwd * 0.3)
             .andThen(intake.runcommand(1), 
             new ParallelRaceGroup(new WaitUntilCommand(()->!shooter.sensorOff()), new WaitCommand(indexStage[0].getTotalTimeSeconds() + 1.5)), 
-            shooter.holdCommand(0), 
-            intake.runcommand(0))
+            intake.runcommand(0),
+            shooter.holdCommand(ShooterConstants.holdRvs*.25),
+                new WaitUntilCommand(shooter::sensorOff),
+            shooter.holdCommand(0)) 
+            
             ),
 
           
@@ -499,15 +504,17 @@ public class RobotContainer {
           shooter.holdCommand(ShooterConstants.holdFwd),
           new WaitCommand(0.5), // Could we wait for shooter::sensorOff, instead?
           shooter.shootCommand(0),
-          shooter.holdCommand(0) ,
+          shooter.holdCommand(0),
           arm.shootPosCommand(false),
         new ParallelCommandGroup(
             autoMaker.swerveControllerCommand(indexStage2[0]),
-            shooter.holdCommand(ShooterConstants.holdFwd * 0.25)
+            shooter.holdCommand(ShooterConstants.holdFwd * 0.3)
             .andThen(intake.runcommand(1), 
             new ParallelRaceGroup(new WaitUntilCommand(()->!shooter.sensorOff()), new WaitCommand(indexStage[0].getTotalTimeSeconds() + 1.5)), 
-            shooter.holdCommand(0), 
-            intake.runcommand(0))
+            intake.runcommand(0),
+            shooter.holdCommand(ShooterConstants.holdRvs*.25),
+                new WaitUntilCommand(shooter::sensorOff),
+            shooter.holdCommand(0)) 
             ),
 
           
@@ -524,11 +531,13 @@ public class RobotContainer {
 
         new ParallelCommandGroup(
             autoMaker.swerveControllerCommand(indexStage3[0]),
-            shooter.holdCommand(ShooterConstants.holdFwd * 0.25)
+            shooter.holdCommand(ShooterConstants.holdFwd * 0.3)
             .andThen(intake.runcommand(1), 
             new ParallelRaceGroup(new WaitUntilCommand(()->!shooter.sensorOff()), new WaitCommand(indexStage[0].getTotalTimeSeconds() + 1.5)), 
-            shooter.holdCommand(0), 
-            intake.runcommand(0))
+            intake.runcommand(0),
+            shooter.holdCommand(ShooterConstants.holdRvs*.25),
+                new WaitUntilCommand(shooter::sensorOff),
+            shooter.holdCommand(0)) 
             ),
 
           
@@ -566,11 +575,13 @@ public class RobotContainer {
       shooter.holdCommand(0),
       new ParallelCommandGroup(
        autoMaker.swerveControllerCommand(indexStage[1]),
-       shooter.holdCommand(ShooterConstants.holdFwd * 0.25)
+       shooter.holdCommand(ShooterConstants.holdFwd * 0.3)
             .andThen(intake.runcommand(1), 
             new ParallelRaceGroup(new WaitUntilCommand(()->!shooter.sensorOff()), new WaitCommand(indexStage[0].getTotalTimeSeconds() + 3.5)), 
-            shooter.holdCommand(0), 
-            intake.runcommand(0))),
+            intake.runcommand(0),
+            shooter.holdCommand(ShooterConstants.holdRvs*.25),
+                new WaitUntilCommand(shooter::sensorOff),
+            shooter.holdCommand(0))), 
        new Rotator(AutoConstants.piRot)
 
       );
