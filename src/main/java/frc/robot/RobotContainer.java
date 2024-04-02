@@ -199,7 +199,7 @@ public class RobotContainer {
     teleopTrigger .and (new Trigger (shooter::sensorOff))
             .onFalse(rumble(true)
               .andThen(
-                shooter.holdCommand(ShooterConstants.holdRvs*.05),
+                shooter.holdCommand(ShooterConstants.holdRvs*.25),
                 intake.runcommand(0),
                 new WaitUntilCommand(shooter::sensorOff),
                 shooter.holdCommand(0)))
